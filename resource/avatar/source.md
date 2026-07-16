@@ -1,0 +1,1 @@
+https://hub.vroid.com/en/characters/1068688385771703078/models/4105584754657554915

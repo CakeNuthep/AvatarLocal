@@ -29,26 +29,26 @@
 - [x] **0.1 Download a VRM model from VRoid Hub**
   - *Skills*: License literacy (commercial vs. personal use restrictions).
   - *AI Prompt*: `"I downloaded a .vrm file from VRoid Hub under a [CC-BY / personal-use] license. What are my restrictions if I use it in a commercial app?"`
-- [ ] **0.2 Install Ollama, pull a model (Typhoon or Qwen3.5)**
+- [x] **0.2 Install Ollama, pull a model (Typhoon or Qwen3.5)**
   - *Skills*: CLI basics, Docker/package management fundamentals.
   - *AI Prompt*: `"Give me step-by-step instructions to install Ollama on [Windows/Mac/Linux] and pull the qwen3.5:4b model. How do I test it responds via curl?"`
-- [ ] **0.3 Install Piper TTS or Coqui XTTS locally**
+- [x] **0.3 Install Piper TTS or Coqui XTTS locally**
   - *Skills*: Python environment setup, CLI.
   - *AI Prompt*: `"Walk me through installing Coqui XTTS in a Python virtual environment on [OS], including GPU (CUDA) support, and give me a minimal script that converts text to a .wav file."`
-- [ ] **0.4 Scaffold project structure**
+- [x] **0.4 Scaffold project structure**
   - *Details*: Create `/src/ai-provider`, `/src/avatar` (r3f components), `/src/ui`, `/src/store`, `/src/locales`, `tests/` (React + Vite).
   - *Skills*: React fundamentals, JS/TS project setup (npm, Vite).
   - *AI Prompt*: `"Set up a Vite + React + TypeScript project with folders src/ai-provider, src/avatar (r3f components), src/ui, src/store, src/locales, tests/. Include ESLint, Prettier, and Vitest + React Testing Library configured for unit testing."`
   - *Unit tests*: Vitest config sanity check (`npm run test` runs with 0 tests, no errors); confirm React Testing Library renders a placeholder `<App />` without throwing.
-- [ ] **0.5 Install and wire up Redux Toolkit (react-redux) + react-i18next**
+- [x] **0.5 Install and wire up Redux Toolkit (react-redux) + react-i18next**
   - *Skills*: Redux Toolkit fundamentals (slices, thunks, store config), react-redux hooks, react-i18next basics.
   - *AI Prompt*: `"Set up @reduxjs/toolkit + react-redux with a root store in src/store/index.ts, wrap <App /> in <Provider store={store}>, and configure react-i18next with a language-detector and at least two locale JSON files (en.json, th.json) for UI strings. Show a minimal component using useTranslation() and useSelector()."`
   - *Unit tests*: Test store configures without error and has expected initial state shape; test i18next resolves a key in both locales and falls back correctly for a missing key.
-- [ ] **0.6 Install React Three Fiber + drei**
+- [x] **0.6 Install React Three Fiber + drei**
   - *Skills*: React Three Fiber fundamentals (Canvas, useFrame, useLoader).
   - *AI Prompt*: `"Install @react-three/fiber and @react-three/drei compatible with my React and three.js versions, and create a minimal <Canvas> component rendering an empty scene with OrbitControls from drei, to confirm the setup works before loading the VRM."`
   - *Unit tests*: Smoke test — render `<AvatarCanvas />` with React Testing Library / `@react-three/test-renderer` and assert it mounts without throwing.
-- [ ] **0.7 Configure local proxy and CORS configurations for local services**
+- [x] **0.7 Configure local proxy and CORS configurations for local services**
   - *Skills*: Vite configuration, networking proxy setup, Ollama configuration.
   - *AI Prompt*: `"How do I configure Vite's development proxy (vite.config.ts) to forward requests from my React app to local Ollama (port 11434) and Coqui/Piper TTS (port 5002) to avoid CORS issues? Also, how do I configure Ollama via environment variables (like OLLAMA_ORIGINS) to allow direct browser requests?"`
   - *Unit tests*: Test Vite configuration logic to verify target API proxies are set up correctly.
@@ -57,35 +57,35 @@
 
 ## Phase 1 — Avatar Rendering (React Three Fiber + three-vrm)
 
-- [ ] **1.1 Build `<AvatarCanvas />` component that loads VRM via r3f**
+- [x] **1.1 Build `<AvatarCanvas />` component that loads VRM via r3f**
   - *Skills*: React Three Fiber (Canvas, useLoader/useFrame), async loading in React, Three.js fundamentals.
   - *AI Prompt*: `"Create an <AvatarCanvas /> React component using @react-three/fiber that loads a .vrm file (via a custom hook useVRM(url) wrapping @pixiv/three-vrm's GLTFLoader plugin), adds basic lighting and OrbitControls from drei, and renders the model inside a <Canvas>."`
   - *Unit tests*: Test `useVRM` hook (mocked loader) resolves and returns a VRM instance; test error state when the URL fails to load.
-- [ ] **1.2 Build a `useBlendshapeController(vrm)` hook to set/get expression weights**
+- [x] **1.2 Build a `useBlendshapeController(vrm)` hook to set/get expression weights**
   - *Skills*: React hooks (`useRef`, `useCallback`), understanding VRM expression/blendshape spec.
   - *AI Prompt*: `"Create a useBlendshapeController(vrm) custom hook wrapping a three-vrm VRMExpressionManager that returns { setExpression(name, weight), lerpTo(name, weight, duration), reset() }, safe to call every frame via useFrame without triggering React re-renders (use refs internally, not state)."`
   - *Unit tests*: Mock `VRMExpressionManager`; test `setExpression` clamps weight to [0,1], `lerpTo` interpolates correctly over mocked time steps, `reset()` zeroes all known expressions.
-- [ ] **1.3 Add debug UI (sliders) to manually test each blendshape range**
+- [x] **1.3 Add debug UI (sliders) to manually test each blendshape range**
   - *Skills*: React component composition, a UI lib (leva or lil-gui).
   - *AI Prompt*: `"Add a leva control panel (React-native alternative to dat.GUI, works cleanly inside r3f) with a slider for every expression name found on the loaded VRM's VRMExpressionManager, calling setExpression from the hook on change."`
-- [ ] **1.4 Implement idle animation (blink, subtle breathing) inside `useFrame`**
+- [x] **1.4 Implement idle animation (blink, subtle breathing) inside `useFrame`**
   - *Skills*: r3f `useFrame` loop, animation loops, easing functions.
   - *AI Prompt*: `"Inside <AvatarCanvas />, use r3f's useFrame to add an idle animation system: random blinking every 2-6 seconds using the VRM's blink expression, and a subtle sine-wave chest/breathing bone movement."`
   - *Unit tests*: Test blink-interval randomizer returns values within configured bounds; test breathing offset function output is a pure function of time (deterministic given seeded time input) — test the pure math functions independent of the `useFrame` callback itself.
-- [ ] **1.5 Create Redux `avatarSlice`**
+- [x] **1.5 Create Redux `avatarSlice`**
   - *State*: `{ currentEmotion, pipelineStatus: 'idle'|'thinking'|'speaking', mouthOpen }`
   - *Skills*: Redux Toolkit `createSlice`, selector design, `useSelector` in `<AvatarCanvas />`.
   - *AI Prompt*: `"Create a Redux Toolkit slice avatarSlice with state { currentEmotion, pipelineStatus: 'idle'|'thinking'|'speaking', mouthOpen }, reducers to update each field, and memoized selectors using createSelector. Show how <AvatarCanvas /> reads currentEmotion via useSelector and applies it inside useFrame without causing the whole canvas to re-render on every mouth-open update (use a ref synced via a subscription instead of useSelector for the high-frequency mouthOpen value)."`
   - *Unit tests*: Test each reducer produces the expected state transition; test selectors return correct derived values given a mock state.
-- [ ] **1.6 Bind VRM eye movement to camera or mouse cursor target**
+- [x] **1.6 Bind VRM eye movement to camera or mouse cursor target**
   - *Skills*: React Three Fiber, VRM LookAt specification, linear interpolation (lerp).
   - *AI Prompt*: `"How do I configure the VRM's LookAt system in @pixiv/three-vrm so that the avatar's eyes track the mouse cursor or the main R3F camera position? Show me how to calculate the look-at target vector and apply linear interpolation (lerp) inside useFrame to smooth the movement."`
   - *Unit tests*: Verify that look-at target positions are updated correctly in the loop, and that weights/ranges are clamped.
-- [ ] **1.7 Add procedural neck and head bone rotation to follow look target**
+- [x] **1.7 Add procedural neck and head bone rotation to follow look target**
   - *Skills*: Three.js bone manipulation, Euler angles, clamping coordinates.
   - *AI Prompt*: `"Using three-vrm, how do I retrieve the neck and head bones from the VRM humanoid hierarchy and rotate them procedurally inside useFrame towards the look-at target? Include code to clamp the rotation angles to realistic human limits (e.g., max 15 degrees) and smooth the transition."`
   - *Unit tests*: Test rotation calculation math in isolation; verify bone rotation angles do not exceed defined clamps.
-- [ ] **1.8 Set up shadows, lighting, and post-processing in `<AvatarCanvas />`**
+- [x] **1.8 Set up shadows, lighting, and post-processing in `<AvatarCanvas />`**
   - *Skills*: Three.js lighting & shadow configuration, R3F postprocessing.
   - *AI Prompt*: `"How do I set up high-quality lighting in my React Three Fiber scene, including a DirectionalLight with soft shadows, and wrap my scene in an EffectComposer from @react-three/postprocessing using Bloom and ACESFilmic ToneMapping for a cinematic look?"`
   - *Unit tests*: Smoke test that light sources and EffectComposer are properly rendered within the React Three Fiber Canvas hierarchy.

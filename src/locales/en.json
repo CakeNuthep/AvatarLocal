@@ -1,0 +1,8 @@
+{
+  "translation": {
+    "welcome": "Welcome to your AI Avatar",
+    "get_started": "Get started",
+    "change_language": "Change Language",
+    "count_is": "Count is {{count}}"
+  }
+}

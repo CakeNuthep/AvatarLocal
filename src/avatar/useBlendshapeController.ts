@@ -26,12 +26,6 @@ export function useBlendshapeController(vrm: VRM | null) {
   const setExpression = useCallback((name: string, weight: number) => {
     if (!vrm?.expressionManager) return
     const clamped = Math.max(0, Math.min(1, weight))
-    
-    // Add debug logging (filter out aa to prevent frame-loop console spam)
-    if (name !== 'aa') {
-      console.log(`[useBlendshapeController] setExpression name=${name} weight=${clamped}`)
-    }
-    
     vrm.expressionManager.setValue(name, clamped)
     
     // Clear any active lerp for this expression
@@ -68,29 +62,17 @@ export function useBlendshapeController(vrm: VRM | null) {
     // Reset all expressions on expressionManager
     const expressions = vrm.expressionManager.expressions || []
     expressions.forEach((expression) => {
-      // Support both expression.name and expression.expressionName for maximum compatibility
-      const expName = expression.name || (expression as any).expressionName
+      // Prioritize expressionName for three-vrm v3 compatibility
+      const expName = (expression as any).expressionName || expression.name
       if (expName) {
         vrm.expressionManager!.setValue(expName, 0)
       }
     })
   }, [vrm])
 
-  const frameCountRef = useRef(0)
-
   // R3F render loop frame updates
   useFrame((_state, delta) => {
     if (!vrm?.expressionManager) return
-
-    frameCountRef.current++
-    if (frameCountRef.current % 180 === 0) {
-      const expValues = (vrm.expressionManager.expressions || []).map((e) => {
-        const name = e.name || (e as any).expressionName
-        const val = vrm.expressionManager!.getValue(name) ?? 0
-        return `${name}: ${val.toFixed(2)}`
-      })
-      console.log(`[useBlendshapeController] tick #` + frameCountRef.current + ` expressions:`, expValues)
-    }
 
     const lerps = activeLerpsRef.current
     let needsUpdate = false

@@ -30,18 +30,20 @@ function AvatarModel({ onLoaded, onControllerReady }: AvatarModelProps) {
   // Manual Redux store subscription to bypass React component re-renders for mouth movement
   const store = useStore()
   const mouthOpenRef = useRef(0)
+  const isSpeakingRef = useRef(false)
 
   useEffect(() => {
     const unsubscribe = store.subscribe(() => {
       const state = store.getState() as RootState
       mouthOpenRef.current = state.avatar.mouthOpen
+      isSpeakingRef.current = state.avatar.pipelineStatus === 'speaking'
     })
     return unsubscribe
   }, [store])
 
-  // Drive lip sync (mouth open) inside the R3F render loop
+  // Drive lip sync (mouth open) inside the R3F render loop only when speaking
   useFrame(() => {
-    if (controller && vrm) {
+    if (controller && vrm && isSpeakingRef.current) {
       controller.setExpression('aa', mouthOpenRef.current)
     }
   })

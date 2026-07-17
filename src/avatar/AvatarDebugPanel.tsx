@@ -17,7 +17,7 @@ export default function AvatarDebugPanel({ vrm, setExpression, reset }: AvatarDe
   // Fetch available expression names on load or when VRM changes
   const expressions = vrm?.expressionManager?.expressions || []
   const expressionNames = expressions
-    .map((e) => e.name || (e as any).expressionName)
+    .map((e) => (e as any).expressionName || e.name)
     .filter(Boolean) as string[]
 
   // Initialize weights state

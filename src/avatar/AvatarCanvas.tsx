@@ -11,24 +11,33 @@ import { useIdleAnimation } from './useIdleAnimation'
 import { useLookAtController } from './useLookAtController'
 import AvatarDebugPanel from './AvatarDebugPanel'
 import { type RootState, selectCurrentEmotion } from '../store'
+import { applyEmotion } from './emotionPresets'
 import { activeLipSyncDriverRef } from '../ai-provider/lip-sync-driver'
 import { activeRhubarbCuesRef } from '../ai-provider/audio-queue-scheduler'
 import { getVisemeWeightsAtTime } from '../ai-provider/rhubarb-lip-sync'
 
 interface AvatarModelProps {
+  currentEmotion: string
   onLoaded: (vrm: VRM) => void
   onControllerReady: (controller: { setExpression: (name: string, weight: number) => void; reset: () => void }) => void
 }
 
-function AvatarModel({ onLoaded, onControllerReady }: AvatarModelProps) {
+function AvatarModel({ currentEmotion, onLoaded, onControllerReady }: AvatarModelProps) {
   const vrm = useVRM('/avatar.vrm')
   const controller = useBlendshapeController(vrm)
   
-  // Trigger automatic idle breathing and blinking loop
-  useIdleAnimation(vrm)
+  // Trigger automatic idle breathing, blinking, and posture loop
+  useIdleAnimation(vrm, currentEmotion)
 
-  // Track eyes to camera/cursor target
-  useLookAtController(vrm)
+  // Track eyes to camera/cursor target with posture offset
+  useLookAtController(vrm, currentEmotion)
+
+  // Apply facial expression changes smoothly when emotion updates
+  useEffect(() => {
+    if (vrm && controller) {
+      applyEmotion(controller, currentEmotion)
+    }
+  }, [currentEmotion, vrm, controller])
 
   // Manual Redux store subscription to bypass React component re-renders for mouth movement
   const store = useStore()
@@ -148,6 +157,7 @@ export default function AvatarCanvas() {
         <pointLight position={[-2, 2, -2]} intensity={0.5} />
         <Suspense fallback={null}>
           <AvatarModel
+            currentEmotion={currentEmotion}
             onLoaded={setVrm}
             onControllerReady={handleControllerReady}
           />

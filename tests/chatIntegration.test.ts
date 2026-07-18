@@ -4,10 +4,12 @@ import { conversationReducer, sendUserMessage } from '../src/store/conversationS
 import { avatarReducer } from '../src/store/avatarSlice';
 import { OllamaProvider } from '../src/ai-provider/ollama-provider';
 import { PiperTTSProvider } from '../src/ai-provider/piper-tts-provider';
+import { classifyTextEmotion } from '../src/ai-provider/emotion-classifier';
 
-// Mock Ollama and TTS synthesis
+// Mock Ollama, TTS synthesis, and emotion classifier
 vi.mock('../src/ai-provider/ollama-provider');
 vi.mock('../src/ai-provider/piper-tts-provider');
+vi.mock('../src/ai-provider/emotion-classifier');
 
 describe('Chat Integration Thunk', () => {
   let store: any;
@@ -65,6 +67,9 @@ describe('Chat Integration Thunk', () => {
     });
     PiperTTSProvider.prototype.synthesize = synthesizeSpy;
 
+    // Mock classifyTextEmotion to return a neutral/low score so it doesn't interfere
+    vi.mocked(classifyTextEmotion).mockResolvedValue({ label: 'happy', score: 0.9 });
+
     // 3. Dispatch the thunk
     const actionPromise = store.dispatch(
       sendUserMessage({ text: 'Hello AI', audioContext: mockAudioContext as any })
@@ -89,5 +94,89 @@ describe('Chat Integration Thunk', () => {
       'en',
       expect.any(Function)
     );
+  });
+
+  it('should update avatar emotion if classification is confident (> 0.5) and different from current', async () => {
+    // 1. Mock Ollama to stream clean tokens without emotion tag
+    const chatStreamSpy = vi.fn().mockImplementation(
+      async (messages: any, language: string, onToken: (t: string) => void) => {
+        onToken('Hello there');
+        return 'Hello there';
+      }
+    );
+    OllamaProvider.prototype.chatStream = chatStreamSpy;
+    PiperTTSProvider.prototype.synthesize = vi.fn().mockResolvedValue({
+      audioBuffer: { duration: 1.0 } as any,
+      mouthCues: []
+    });
+
+    // 2. Mock classifyTextEmotion to return 'happy' with high confidence
+    vi.mocked(classifyTextEmotion).mockResolvedValue({ label: 'happy', score: 0.9 });
+
+    // 3. Ensure store starts with 'neutral' emotion
+    store.dispatch({ type: 'avatar/setCurrentEmotion', payload: 'neutral' });
+
+    // 4. Send message and await
+    await store.dispatch(
+      sendUserMessage({ text: 'I am so happy!', audioContext: mockAudioContext as any })
+    );
+
+    // 5. Verify avatar emotion updated to 'happy'
+    expect(store.getState().avatar.currentEmotion).toBe('happy');
+    expect(classifyTextEmotion).toHaveBeenCalledWith('I am so happy!');
+  });
+
+  it('should not update avatar emotion if classification is different but confidence score is low (<= 0.5)', async () => {
+    const chatStreamSpy = vi.fn().mockImplementation(
+      async (messages: any, language: string, onToken: (t: string) => void) => {
+        onToken('Hello there');
+        return 'Hello there';
+      }
+    );
+    OllamaProvider.prototype.chatStream = chatStreamSpy;
+    PiperTTSProvider.prototype.synthesize = vi.fn().mockResolvedValue({
+      audioBuffer: { duration: 1.0 } as any,
+      mouthCues: []
+    });
+
+    // Mock classifyTextEmotion with low confidence
+    vi.mocked(classifyTextEmotion).mockResolvedValue({ label: 'happy', score: 0.45 });
+
+    store.dispatch({ type: 'avatar/setCurrentEmotion', payload: 'neutral' });
+
+    await store.dispatch(
+      sendUserMessage({ text: 'I am happy?', audioContext: mockAudioContext as any })
+    );
+
+    // Emotion should remain 'neutral' due to low confidence threshold
+    expect(store.getState().avatar.currentEmotion).toBe('neutral');
+  });
+
+  it('should not update avatar emotion if classification is the same as current emotion', async () => {
+    const chatStreamSpy = vi.fn().mockImplementation(
+      async (messages: any, language: string, onToken: (t: string) => void) => {
+        onToken('Hello there');
+        return 'Hello there';
+      }
+    );
+    OllamaProvider.prototype.chatStream = chatStreamSpy;
+    PiperTTSProvider.prototype.synthesize = vi.fn().mockResolvedValue({
+      audioBuffer: { duration: 1.0 } as any,
+      mouthCues: []
+    });
+
+    // Mock classifyTextEmotion to return 'happy' with high confidence
+    vi.mocked(classifyTextEmotion).mockResolvedValue({ label: 'happy', score: 0.9 });
+
+    // Store is already 'happy'
+    store.dispatch({ type: 'avatar/setCurrentEmotion', payload: 'happy' });
+
+    // Use a spy to track if setCurrentEmotion action is dispatched (optional, checking state retention is safer)
+    await store.dispatch(
+      sendUserMessage({ text: 'I am happy!', audioContext: mockAudioContext as any })
+    );
+
+    // Emotion should remain 'happy' without unnecessary change triggers
+    expect(store.getState().avatar.currentEmotion).toBe('happy');
   });
 });

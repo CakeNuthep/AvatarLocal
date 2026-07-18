@@ -43,6 +43,7 @@ vi.mock('../src/avatar/useBlendshapeController', () => ({
   useBlendshapeController: () => ({
     setExpression: mockSetExpression,
     reset: mockReset,
+    lerpTo: vi.fn(),
   }),
 }))
 

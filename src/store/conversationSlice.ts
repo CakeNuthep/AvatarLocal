@@ -4,6 +4,7 @@ import { EmotionStreamParser } from '../ai-provider/stream-parser';
 import { AudioQueueScheduler } from '../ai-provider/audio-queue-scheduler';
 import { PiperTTSProvider } from '../ai-provider/piper-tts-provider';
 import { setPipelineStatus, setCurrentEmotion } from './avatarSlice';
+import { classifyTextEmotion } from '../ai-provider/emotion-classifier';
 import type { ChatMessage } from '../ai-provider/ai-provider';
 
 export interface ConversationState {
@@ -65,6 +66,15 @@ export const sendUserMessage = createAsyncThunk<
   dispatch(conversationSlice.actions.addUserMessage(text));
   dispatch(conversationSlice.actions.setStatus('loading'));
   dispatch(setPipelineStatus('thinking'));
+
+  // Classify user message emotion in background and update avatar immediately if confident (> 0.5) and different
+  classifyTextEmotion(text).then((detection) => {
+    const currentState = thunkAPI.getState();
+    const currentEmotion = currentState.avatar.currentEmotion;
+    if (detection && detection.score > 0.5 && detection.label !== currentEmotion) {
+      dispatch(setCurrentEmotion(detection.label));
+    }
+  }).catch((err) => console.error('Emotion classification error:', err));
 
   try {
     // 2. Fetch the trimmed message history

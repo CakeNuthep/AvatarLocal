@@ -142,18 +142,18 @@
 
 ## Phase 4 — Emotion Detection
 
-- [ ] **4.1 Integrate `transformers.js` sentiment/emotion classification model**
+- [x] **4.1 Integrate `transformers.js` sentiment/emotion classification model**
   - *Skills*: ML model basics (classification, labels/scores), `transformers.js` API.
   - *AI Prompt*: `"Show me how to load a small emotion-classification ONNX model in transformers.js in the browser, and get a label + confidence score from a text string."`
-- [ ] **4.2 Build emotion → blendshape preset mapping table**
+- [x] **4.2 Build emotion → blendshape preset mapping table**
   - *Skills*: JS data structures, animation/UX judgement.
   - *AI Prompt*: `"Create an EMOTION_PRESETS map (happy, sad, angry, surprised, neutral) where each key maps to a set of {expressionName, weight} pairs matching typical VRM expression names. Include a function applyEmotion(controller, emotionLabel) that lerps to the preset."`
   - *Unit tests*: Test `applyEmotion` picks the correct preset for a known label, falls back to neutral for unknown labels, and calls `lerpTo` (mocked) with expected arguments.
-- [ ] **4.3 Smooth transitions between emotions (avoid jitter)**
+- [x] **4.3 Smooth transitions between emotions (avoid jitter)**
   - *Skills*: Easing/interpolation.
   - *AI Prompt*: `"Add debouncing so emotion changes only apply if the new label differs from current AND confidence exceeds a threshold, to avoid flickering between similar emotions."`
   - *Unit tests*: Test debounce logic rejects low-confidence or repeated-label updates, accepts a genuinely new high-confidence label.
-- [ ] **4.4 Map emotions to body posture poses by manipulating humanoid bones**
+- [x] **4.4 Map emotions to body posture poses by manipulating humanoid bones**
   - *Skills*: VRM humanoid bone mapping, skeletal animation.
   - *AI Prompt*: `"How do I modify body posture bone rotations (like spine, leftShoulder, rightShoulder) in a VRM model based on the active emotion? Provide a mapping table (e.g. sad slumps the shoulders and tilts the head down) and show how to lerp these bone rotations smoothly in useFrame."`
   - *Unit tests*: Test pose mapping returns correct rotation matrices/quaternions for each emotion; test lerp function correctly transitions from neutral to target pose.

@@ -1,5 +1,16 @@
 import { TTSProvider } from './tts-provider';
 import { LipSyncDriver } from './lip-sync-driver';
+import type { RhubarbMouthCue } from './rhubarb-lip-sync';
+
+/**
+ * Global registry tracking active Rhubarb viseme cues for the R3F loop.
+ */
+export const activeRhubarbCuesRef = {
+  current: null as {
+    cues: RhubarbMouthCue[];
+    startTime: number; // audioCtx.currentTime when playback starts
+  } | null
+};
 
 /**
  * Splits text into sentences using typical terminal punctuation, newlines, and pipe characters.
@@ -25,7 +36,8 @@ interface QueueItem {
   text: string;
   status: 'pending' | 'synthesizing' | 'ready' | 'playing' | 'completed' | 'failed';
   audioBuffer?: AudioBuffer;
-  promise?: Promise<AudioBuffer>;
+  mouthCues?: RhubarbMouthCue[];
+  promise?: Promise<any>;
 }
 
 /**
@@ -87,6 +99,9 @@ export class AudioQueueScheduler {
    * Stops playback immediately, cancels active synthesis items, and resets the queue state.
    */
   stop(): void {
+    // 0. Reset active Rhubarb cues
+    activeRhubarbCuesRef.current = null;
+
     // 1. Stop active audio
     if (this.currentSource) {
       try {
@@ -135,15 +150,16 @@ export class AudioQueueScheduler {
   /**
    * Starts synthesizing a single pending queue item using the TTS provider.
    */
-  private async synthesizeItem(item: QueueItem, language: string): Promise<AudioBuffer> {
+  private async synthesizeItem(item: QueueItem, language: string): Promise<any> {
     item.status = 'synthesizing';
     item.promise = this.ttsProvider.synthesize(item.text, language)
-      .then((buffer) => {
+      .then((result) => {
         item.status = 'ready';
-        item.audioBuffer = buffer;
+        item.audioBuffer = result.audioBuffer;
+        item.mouthCues = result.mouthCues;
         // Run queue loop to play next if waiting
         this.processQueue(language);
-        return buffer;
+        return result;
       })
       .catch((err) => {
         item.status = 'failed';
@@ -220,9 +236,24 @@ export class AudioQueueScheduler {
     this.currentSource = source;
     this.currentDriver = driver;
 
+    // Register active Rhubarb cues if present
+    if (item.mouthCues && item.mouthCues.length > 0) {
+      activeRhubarbCuesRef.current = {
+        cues: item.mouthCues,
+        startTime: this.audioContext.currentTime,
+      };
+    } else {
+      activeRhubarbCuesRef.current = null;
+    }
+
     source.start(0);
 
     source.onended = () => {
+      // Clear active cues if they belong to this sentence
+      if (activeRhubarbCuesRef.current?.cues === item.mouthCues) {
+        activeRhubarbCuesRef.current = null;
+      }
+
       driver.destroy();
       item.status = 'completed';
       this.isPlaying = false;

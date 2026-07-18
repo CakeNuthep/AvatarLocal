@@ -22,7 +22,10 @@ describe('PiperTTSProvider', () => {
   test('synthesize selects the correct voice and fetches correctly for English', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(100)),
+      json: vi.fn().mockResolvedValue({
+        audio: 'AAA=',
+        cues: [{ start: 0, end: 1, value: 'A' }]
+      }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -31,13 +34,17 @@ describe('PiperTTSProvider', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/tts?text=Hello&speaker=en_US-lessac-medium');
     expect(mockAudioContext.decodeAudioData).toHaveBeenCalled();
-    expect(result).toBe(mockAudioBuffer);
+    expect(result.audioBuffer).toBe(mockAudioBuffer);
+    expect(result.mouthCues).toEqual([{ start: 0, end: 1, value: 'A' }]);
   });
 
   test('synthesize selects the correct voice and fetches correctly for Thai', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(100)),
+      json: vi.fn().mockResolvedValue({
+        audio: 'AAA=',
+        cues: [{ start: 0.1, end: 0.5, value: 'B' }]
+      }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -46,7 +53,8 @@ describe('PiperTTSProvider', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/tts?text=%E0%B8%AA%E0%B8%A7%E0%B8%B1%E0%B8%AA%E0%B8%94%E0%B8%B5&speaker=th_TH-apatcha-medium');
     expect(mockAudioContext.decodeAudioData).toHaveBeenCalled();
-    expect(result).toBe(mockAudioBuffer);
+    expect(result.audioBuffer).toBe(mockAudioBuffer);
+    expect(result.mouthCues).toEqual([{ start: 0.1, end: 0.5, value: 'B' }]);
   });
 
   test('synthesize throws error if voice is not configured for language', async () => {
@@ -73,7 +81,10 @@ describe('PiperTTSProvider', () => {
   test('lazily creates AudioContext if none provided in constructor', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(100)),
+      json: vi.fn().mockResolvedValue({
+        audio: 'AAA=',
+        cues: []
+      }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -91,6 +102,7 @@ describe('PiperTTSProvider', () => {
 
     expect(mockGlobalAudioContext).toHaveBeenCalled();
     expect(decodeMock).toHaveBeenCalled();
-    expect(result).toBe(mockAudioBuffer);
+    expect(result.audioBuffer).toBe(mockAudioBuffer);
+    expect(result.mouthCues).toEqual([]);
   });
 });

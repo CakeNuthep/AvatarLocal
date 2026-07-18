@@ -5,6 +5,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import { avatarReducer } from '../src/store/avatarSlice'
 import AvatarCanvas from '../src/avatar/AvatarCanvas'
 import { activeLipSyncDriverRef } from '../src/ai-provider/lip-sync-driver'
+import { activeRhubarbCuesRef } from '../src/ai-provider/audio-queue-scheduler'
 import React from 'react'
 
 // Capture R3F frame loop callback
@@ -60,6 +61,7 @@ describe('AvatarCanvas and LipSync integration', () => {
     vi.clearAllMocks()
     frameCallback = null
     activeLipSyncDriverRef.current = null
+    activeRhubarbCuesRef.current = null
 
     store = configureStore({
       reducer: {
@@ -92,6 +94,38 @@ describe('AvatarCanvas and LipSync integration', () => {
     // Assert driver.update() is called, and expression is set with the 0.85 cap
     expect(mockDriverUpdate).toHaveBeenCalled()
     expect(mockSetExpression).toHaveBeenCalledWith('aa', 0.85)
+  })
+
+  test('drives lip-sync via activeRhubarbCuesRef inside frame loop', () => {
+    render(
+      <Provider store={store}>
+        <AvatarCanvas />
+      </Provider>
+    )
+
+    expect(frameCallback).toBeDefined()
+    if (!frameCallback) throw new Error('frameCallback not captured')
+
+    // Mock active rhubarb cues (C represents aa: 0.70)
+    const mockAudioContext = { currentTime: 0.25 }
+    activeRhubarbCuesRef.current = {
+      cues: [
+        { start: 0.0, end: 0.1, value: 'X' },
+        { start: 0.1, end: 0.4, value: 'C' }
+      ],
+      startTime: 0.0,
+      audioContext: mockAudioContext as any
+    }
+
+    // Trigger frame tick
+    frameCallback({}, 0.016)
+
+    // C shape maps to aa = 0.70
+    expect(mockSetExpression).toHaveBeenCalledWith('aa', 0.70)
+    expect(mockSetExpression).toHaveBeenCalledWith('ee', 0)
+    expect(mockSetExpression).toHaveBeenCalledWith('ih', 0)
+    expect(mockSetExpression).toHaveBeenCalledWith('oh', 0)
+    expect(mockSetExpression).toHaveBeenCalledWith('ou', 0)
   })
 
   test('falls back to Redux mouthOpen when no active driver but speaking is true', () => {

@@ -4,6 +4,9 @@ import urllib.request
 import urllib.parse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import subprocess
+import base64
+import json
+import shutil
 
 PORT = 5002
 MODEL_DIR = os.path.join("resource", "tts")
@@ -51,6 +54,39 @@ def check_and_download_model(model_name: str) -> tuple[bool, str]:
         if os.path.exists(json_path):
             os.remove(json_path)
         return False, f"Failed to auto-download model from Hugging Face: {str(e)}"
+
+def run_rhubarb(wav_path: str) -> list:
+    """
+    Runs the Rhubarb Lip Sync CLI on the generated WAV file.
+    Returns a parsed list of mouth cues, or an empty list if Rhubarb is not installed/fails.
+    """
+    rhubarb_bin = shutil.which("rhubarb")
+    if not rhubarb_bin:
+        rhubarb_bin = "rhubarb"  # Fallback to path
+
+    cmd = [
+        rhubarb_bin,
+        "-f", "json",
+        wav_path
+    ]
+
+    try:
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        stdout, stderr = process.communicate()
+        if process.returncode == 0:
+            parsed = json.loads(stdout.decode("utf-8", errors="ignore"))
+            return parsed.get("mouthCues", [])
+        else:
+            # Non-blocking warning
+            print(f"[WARN] Rhubarb process returned error: {stderr.decode('utf-8', errors='ignore')}")
+            return []
+    except Exception as e:
+        print(f"[INFO] Rhubarb CLI not available: {str(e)}")
+        return []
 
 class PiperHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -114,12 +150,24 @@ class PiperHTTPRequestHandler(BaseHTTPRequestHandler):
                 with open(temp_wav_path, "rb") as f:
                     wav_data = f.read()
 
+                # Generate viseme cues using Rhubarb (if available)
+                cues = run_rhubarb(temp_wav_path)
+
+                # Base64 encode the audio data
+                audio_b64 = base64.b64encode(wav_data).decode("utf-8")
+
+                # Prepare envelope payload
+                payload = {
+                    "audio": audio_b64,
+                    "cues": cues
+                }
+
                 self.send_response(200)
-                self.send_header("Content-Type", "audio/wav")
+                self.send_header("Content-Type", "application/json")
                 # Prevent CORS issues if called directly by browser
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
-                self.wfile.write(wav_data)
+                self.wfile.write(json.dumps(payload).encode("utf-8"))
             else:
                 self.send_response(500)
                 self.send_header("Content-Type", "text/plain")

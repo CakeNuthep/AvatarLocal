@@ -12,6 +12,8 @@ import { useLookAtController } from './useLookAtController'
 import AvatarDebugPanel from './AvatarDebugPanel'
 import { type RootState, selectCurrentEmotion } from '../store'
 import { activeLipSyncDriverRef } from '../ai-provider/lip-sync-driver'
+import { activeRhubarbCuesRef } from '../ai-provider/audio-queue-scheduler'
+import { getVisemeWeightsAtTime } from '../ai-provider/rhubarb-lip-sync'
 
 interface AvatarModelProps {
   onLoaded: (vrm: VRM) => void
@@ -42,18 +44,53 @@ function AvatarModel({ onLoaded, onControllerReady }: AvatarModelProps) {
     return unsubscribe
   }, [store])
 
-  // Drive lip sync (mouth open) inside the R3F render loop only when speaking
+  // Drive lip sync (mouth open and visemes) inside the R3F render loop only when speaking
   useFrame(() => {
     if (controller && vrm) {
-      if (activeLipSyncDriverRef.current) {
-        // High-performance real-time analysis path (bypasses Redux)
+      const rhubarb = activeRhubarbCuesRef.current
+      if (rhubarb) {
+        // High-fidelity viseme path (drives a, e, i, o, u shapes matching sound)
+        const elapsed = rhubarb.audioContext.currentTime - rhubarb.startTime
+        const weights = getVisemeWeightsAtTime(rhubarb.cues, elapsed)
+
+        controller.setExpression('aa', Math.min(0.85, weights.aa))
+        controller.setExpression('ee', Math.min(0.85, weights.ee))
+        controller.setExpression('ih', Math.min(0.85, weights.ih))
+        controller.setExpression('oh', Math.min(0.85, weights.oh))
+        controller.setExpression('ou', Math.min(0.85, weights.ou))
+
+        // Still update the LipSyncDriver analyzer if it exists (for volume-based ticks)
+        if (activeLipSyncDriverRef.current) {
+          activeLipSyncDriverRef.current.update()
+        }
+      } else if (activeLipSyncDriverRef.current) {
+        // High-performance real-time volume amplitude fallback path (bypasses Redux, aa only)
         const volume = activeLipSyncDriverRef.current.update()
         const cappedMouthOpen = Math.min(0.85, volume)
         controller.setExpression('aa', cappedMouthOpen)
+        
+        // Reset other visemes to 0
+        controller.setExpression('ee', 0)
+        controller.setExpression('ih', 0)
+        controller.setExpression('oh', 0)
+        controller.setExpression('ou', 0)
       } else if (isSpeakingRef.current) {
         // Fallback/Redux control path
         const cappedMouthOpen = Math.min(0.85, mouthOpenRef.current)
         controller.setExpression('aa', cappedMouthOpen)
+
+        // Reset other visemes to 0
+        controller.setExpression('ee', 0)
+        controller.setExpression('ih', 0)
+        controller.setExpression('oh', 0)
+        controller.setExpression('ou', 0)
+      } else {
+        // When completely idle, reset all visemes
+        controller.setExpression('aa', 0)
+        controller.setExpression('ee', 0)
+        controller.setExpression('ih', 0)
+        controller.setExpression('oh', 0)
+        controller.setExpression('ou', 0)
       }
     }
   })

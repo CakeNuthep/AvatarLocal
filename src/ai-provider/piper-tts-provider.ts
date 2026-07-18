@@ -1,4 +1,5 @@
 import { TTSProvider } from './tts-provider';
+import type { TTSSynthesisResult } from './tts-provider';
 
 export interface PiperTTSProviderOptions {
   audioContext?: AudioContext;
@@ -27,9 +28,9 @@ export class PiperTTSProvider extends TTSProvider {
    * 
    * @param text The text to synthesize
    * @param language The language code (e.g. 'en', 'th')
-   * @returns A promise resolving to the decoded AudioBuffer
+   * @returns A promise resolving to the TTSSynthesisResult
    */
-  async synthesize(text: string, language: string): Promise<AudioBuffer> {
+  async synthesize(text: string, language: string): Promise<TTSSynthesisResult> {
     const voice = this.voiceMap[language.toLowerCase()];
     if (!voice) {
       throw new Error(`Unsupported language or no voice configured for: ${language}`);
@@ -42,8 +43,25 @@ export class PiperTTSProvider extends TTSProvider {
       throw new Error(`Piper TTS request failed with status: ${response.status} ${response.statusText}`);
     }
 
-    const arrayBuffer = await response.arrayBuffer();
+    const payload = await response.json();
+    const audioBase64 = payload.audio;
+    const mouthCues = payload.cues || [];
+
+    // Decode base64 to ArrayBuffer
+    const binaryString = atob(audioBase64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const arrayBuffer = bytes.buffer;
+
     const audioContext = this.getAudioContext();
-    return await audioContext.decodeAudioData(arrayBuffer);
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+    return {
+      audioBuffer,
+      mouthCues,
+    };
   }
 }

@@ -58,10 +58,13 @@ test('renders Test Voice & Lip-Sync button and triggers synthesis on click', asy
   });
   vi.stubGlobal('AudioContext', mockAudioContextClass);
 
-  // Mock fetch
+  // Mock fetch to return a JSON envelope with base64 audio and empty cues list
   const fetchMock = vi.fn().mockResolvedValue({
     ok: true,
-    arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(100)),
+    json: vi.fn().mockResolvedValue({
+      audio: 'AAA=',
+      cues: [],
+    }),
   });
   vi.stubGlobal('fetch', fetchMock);
 

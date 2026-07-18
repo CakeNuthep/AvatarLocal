@@ -61,6 +61,7 @@ describe('AudioQueueScheduler', () => {
 
     mockAudioContext = {
       destination: {},
+      currentTime: 0,
       createAnalyser: vi.fn().mockReturnValue(mockAnalyserNode),
       createBufferSource: vi.fn(),
     };
@@ -78,7 +79,10 @@ describe('AudioQueueScheduler', () => {
     mockAudioContext.createBufferSource.mockReturnValue(mockSourceNode);
 
     mockTTSProvider = {
-      synthesize: vi.fn().mockResolvedValue(mockAudioBuffer),
+      synthesize: vi.fn().mockResolvedValue({
+        audioBuffer: mockAudioBuffer,
+        mouthCues: [{ start: 0, end: 1, value: 'A' }],
+      }),
     } as any;
   });
 
@@ -169,7 +173,10 @@ describe('AudioQueueScheduler', () => {
       if (text === 'Second.') {
         return Promise.reject(new Error('Synthesis failed'));
       }
-      return Promise.resolve(mockAudioBuffer);
+      return Promise.resolve({
+        audioBuffer: mockAudioBuffer,
+        mouthCues: [],
+      });
     });
 
     scheduler.enqueueText('First. Second. Third.', 'en');

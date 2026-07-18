@@ -117,23 +117,23 @@
 
 ## Phase 3 — LLM Chat Integration
 
-- [ ] **3.1 Build `AIProvider` interface + `OllamaProvider`, language-aware**
+- [x] **3.1 Build `AIProvider` interface + `OllamaProvider`, language-aware**
   - *Skills*: Async JS, REST APIs, prompt engineering basics.
   - *AI Prompt*: `"Define an abstract AIProvider class with async chat(messages: {role, content}[], language: string): Promise<string>. Implement OllamaProvider calling POST http://localhost:11434/api/chat, injecting a system instruction to respond in the given language, with streaming disabled first, then add streaming support."`
   - *Unit tests*: Mock fetch; test `chat()` correctly serializes the messages array (including the language system instruction), parses the response body, and throws on malformed JSON or connection failure.
-- [ ] **3.2 Create Redux `conversationSlice` (message history, active language)**
+- [x] **3.2 Create Redux `conversationSlice` (message history, active language)**
   - *Skills*: Redux Toolkit `createSlice` + `createAsyncThunk`.
   - *AI Prompt*: `"Convert a ConversationManager class into a Redux Toolkit slice conversationSlice with state { messages: [], language: 'en', status: 'idle'|'loading'|'error' }. Add reducers addUserMessage, addAssistantMessage, setLanguage, clearHistory, and a message-trimming selector that keeps system prompt + last N turns."`
   - *Unit tests*: Test trimming selector keeps system prompt + last N turns exactly; test message ordering is preserved; test `setLanguage` updates state without mutating history; test reducers are pure.
-- [ ] **3.3 Wire `setLanguage` action to a UI language switcher, dispatch to all providers**
-  - *Skills*: Redux `useSelector` / `useDispatch` (or vanilla `store.subscribe`), `i18next.changeLanguage`.
+- [x] **3.3 Wire `setLanguage` action to a UI language switcher, dispatch to all providers**
+  - *Skills*: Redux `useSelector` / `useDispatch`, `i18next.changeLanguage`.
   - *AI Prompt*: `"Build a language switcher dropdown that on change: (1) dispatches conversationSlice.actions.setLanguage, (2) calls i18next.changeLanguage() for UI strings, (3) triggers no immediate LLM call — language only applies to the next message sent."`
   - *Unit tests*: Test dispatching `setLanguage` updates the store's `conversation.language` field; test UI language change does not clear existing conversation history.
-- [ ] **3.4 Connect: user input → AIProvider.chat → TTSProvider.synthesize → LipSyncDriver**
+- [x] **3.4 Connect: user input → AIProvider.chat → TTSProvider.synthesize → LipSyncDriver**
   - *Skills*: Async pipeline orchestration, error boundaries, Redux thunks.
   - *AI Prompt*: `"Write a Redux thunk sendUserMessage(text) that reads current language from the store, sends text through OllamaProvider → PiperTTSProvider (both language-aware) → plays audio while driving lip-sync, dispatching avatarSlice pipeline-status updates (thinking → speaking → idle) along the way, with try/catch fallback to display text-only if TTS fails."`
   - *Unit tests*: Test thunk dispatches actions in the correct order (`thinking`, then `speaking`, then `idle`) given mocked providers; test failure path dispatches an error state instead of hanging on `thinking`.
-- [ ] **3.5 Structure LLM system prompts for emotion-tagging and write a stream parser**
+- [x] **3.5 Structure LLM system prompts for emotion-tagging and write a stream parser**
   - *Skills*: System prompt engineering, stream parsing, regex.
   - *AI Prompt*: `"How do I write an Ollama system prompt instructing a model to output emotional tags (e.g. [happy], [sad], [neutral]) prefixing sentences? Write a JS stream parser that processes LLM output token-by-token, extracts these emotion tags, and dispatches Redux events to change the avatar's expression BEFORE playing that sentence's audio."`
   - *Unit tests*: Test parser correctly extracts tags and separates them from clean text; test various formatting edge cases (missing tags, multiple tags in one response).

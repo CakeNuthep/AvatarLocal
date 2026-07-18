@@ -94,22 +94,22 @@
 
 ## Phase 2 — TTS + Lip-Sync
 
-- [ ] **2.1 Build `TTSProvider` interface + `PiperTTSProvider` (or Coqui) implementation, language-aware**
+- [x] **2.1 Build `TTSProvider` interface + `PiperTTSProvider` (or Coqui) implementation, language-aware**
   - *Skills*: Async JS, HTTP/local process communication.
   - *AI Prompt*: `"Define an abstract TTSProvider class with an async synthesize(text, language): Promise<AudioBuffer> method. Implement PiperTTSProvider that selects the correct voice model based on the language argument (e.g., 'th' → Thai voice, 'en' → English voice) and calls a local Piper HTTP server, returning decoded audio."`
   - *Unit tests*: Mock the HTTP layer; test `synthesize` selects the correct voice/model id per language argument, throws a typed error on non-200 response, and resolves an `AudioBuffer`-like object on success.
-- [ ] **2.2 Implement amplitude-based lip-sync using Web Audio API**
+- [x] **2.2 Implement amplitude-based lip-sync using Web Audio API**
   - *Skills*: Web Audio API (`AnalyserNode`, FFT concepts).
   - *AI Prompt*: `"Write a LipSyncDriver class that takes an AudioBufferSourceNode, uses an AnalyserNode to read amplitude each frame, maps RMS volume to a 0-1 mouth-open value with smoothing, and calls a callback with that value."`
   - *Unit tests*: Given a synthetic `Float32Array` waveform (silence, full-volume sine), assert RMS calculation and smoothing function output known expected ranges — no need to mock the browser AudioContext, test the math function in isolation.
-- [ ] **2.3 Wire lip-sync output into `useBlendshapeController` mouth expression via `useFrame`**
+- [x] **2.3 Wire lip-sync output into `useBlendshapeController` mouth expression via `useFrame`**
   - *Skills*: Integration of 1.2 + 2.2, r3f `useFrame`.
   - *AI Prompt*: `"Connect the LipSyncDriver's per-frame amplitude value to setExpression('aa', value) from the useBlendshapeController hook inside <AvatarCanvas />'s useFrame loop, with a max cap to avoid over-opening the mouth. Read the live amplitude via a ref, not React state, to avoid re-render overhead at 60fps."`
-- [ ] **2.4 Implement sentence chunking and a sequential TTS audio playback queue**
+- [x] **2.4 Implement sentence chunking and a sequential TTS audio playback queue**
   - *Skills*: Javascript async queue design, Web Audio API scheduler, string tokenizing.
   - *AI Prompt*: `"Write an AudioQueueScheduler class that manages a queue of TTS synthesis requests. It should accept a stream of text, split it at sentence boundaries (using punctuation like '.', '!', '?'), fetch TTS audio buffers for each sentence in the background, and play them back sequentially without overlaps or gaps. Provide a Vitest unit test."`
   - *Unit tests*: Test sentence-splitting regex with various punctuation marks and languages (EN/TH); test queue executes tasks in correct FIFO order.
-- [ ] **2.5 (Optional, higher fidelity) Integrate Rhubarb Lip Sync for pre-recorded audio → viseme timing**
+- [x] **2.5 (Optional, higher fidelity) Integrate Rhubarb Lip Sync for pre-recorded audio → viseme timing**
   - *Skills*: CLI tooling, phoneme/viseme mapping concepts.
   - *AI Prompt*: `"Show me how to run Rhubarb Lip Sync on a .wav file to get viseme JSON output, and how to map its viseme codes (A, B, C...) to VRM standard mouth expression names."`
 

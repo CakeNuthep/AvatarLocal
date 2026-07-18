@@ -13,6 +13,7 @@ interface AvatarDebugPanelProps {
  */
 export default function AvatarDebugPanel({ vrm, setExpression, reset }: AvatarDebugPanelProps) {
   const [expressionWeights, setExpressionWeights] = useState<Record<string, number>>({})
+  const [collapsed, setCollapsed] = useState(false)
 
   // Fetch available expression names on load or when VRM changes
   const expressions = vrm?.expressionManager?.expressions || []
@@ -72,44 +73,56 @@ export default function AvatarDebugPanel({ vrm, setExpression, reset }: AvatarDe
   }
 
   return (
-    <div style={panelStyle} className="avatar-debug-panel">
-      <div style={headerStyle}>
-        <h3 style={titleStyle}>Expression Controls</h3>
-        <button onClick={handleReset} style={resetButtonStyle}>
-          Reset
-        </button>
+    <div style={{ ...panelStyle, height: collapsed ? 'auto' : undefined, paddingBottom: collapsed ? '10px' : '16px' }} className="avatar-debug-panel">
+      <div style={{ ...headerStyle, marginBottom: collapsed ? '0px' : '12px', borderBottom: collapsed ? 'none' : '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: collapsed ? '0px' : '10px' }}>
+        <div 
+          onClick={() => setCollapsed(!collapsed)} 
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none' }}
+          title={collapsed ? "Expand panel" : "Collapse panel"}
+        >
+          <span style={{ fontSize: '10px', color: '#a78bfa', transition: 'transform 0.2s', transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)', display: 'inline-block' }}>▼</span>
+          <h3 style={titleStyle}>Expression Controls</h3>
+        </div>
+        {!collapsed && (
+          <button onClick={handleReset} style={resetButtonStyle}>
+            Reset
+          </button>
+        )}
       </div>
 
-      <div style={scrollAreaStyle}>
-        {Object.entries(categorized).map(([category, names]) => {
-          if (names.length === 0) return null
-          return (
-            <div key={category} style={{ marginBottom: '16px' }}>
-              <div style={categoryTitleStyle}>{category}</div>
-              {names.map((name) => {
-                const value = expressionWeights[name] ?? 0
-                return (
-                  <div key={name} style={controlRowStyle}>
-                    <div style={labelContainerStyle}>
-                      <span style={labelStyle}>{name}</span>
-                      <span style={valueStyle}>{value.toFixed(2)}</span>
+      {!collapsed && (
+        <div style={scrollAreaStyle}>
+          {Object.entries(categorized).map(([category, names]) => {
+            if (names.length === 0) return null
+            return (
+              <div key={category} style={{ marginBottom: '16px' }}>
+                <div style={categoryTitleStyle}>{category}</div>
+                {names.map((name) => {
+                  const value = expressionWeights[name] ?? 0
+                  return (
+                    <div key={name} style={controlRowStyle}>
+                      <div style={labelContainerStyle}>
+                        <span style={labelStyle}>{name}</span>
+                        <span id={`val-indicator-${name}`} style={valueStyle}>{value.toFixed(2)}</span>
+                      </div>
+                      <input
+                        id={`slider-input-${name}`}
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={value}
+                        onChange={(e) => handleSliderChange(name, parseFloat(e.target.value))}
+                        style={sliderStyle}
+                      />
                     </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={value}
-                      onChange={(e) => handleSliderChange(name, parseFloat(e.target.value))}
-                      style={sliderStyle}
-                    />
-                  </div>
-                )
-              })}
-            </div>
-          )
-        })}
-      </div>
+                  )
+                })}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

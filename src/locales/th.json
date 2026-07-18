@@ -3,6 +3,21 @@
     "welcome": "ยินดีต้อนรับสู่ AI Avatar ของคุณ",
     "get_started": "เริ่มต้นใช้งาน",
     "change_language": "เปลี่ยนภาษา",
-    "count_is": "นับได้ {{count}}"
+    "app_title": "ออร่า เอไอ",
+    "status_thinking": "กำลังคิด...",
+    "status_speaking": "กำลังพูด...",
+    "status_idle": "ออนไลน์",
+    "hide_thinking": "ซ่อนกระบวนการคิด",
+    "show_thinking": "แสดงกระบวนการคิด",
+    "chat_start_hint": "ถามคำถามเพื่อเริ่มการสนทนา!",
+    "thinking_process": "กระบวนการคิด",
+    "error_message": "ข้อผิดพลาด",
+    "chat_placeholder": "พูดบางอย่าง...",
+    "send": "ส่ง",
+    "retry": "ลองใหม่",
+    "error_llm_unreachable": "ไม่สามารถติดต่อ LLM ได้ โปรดตรวจสอบว่า Ollama ทำงานอยู่บนพอร์ต 11434 หรือไม่",
+    "error_tts_failed": "การสังเคราะห์เสียง (TTS) ล้มเหลว โปรดตรวจสอบว่าเซิร์ฟเวอร์ TTS ทำงานอยู่บนพอร์ต 5002 หรือไม่",
+    "error_model_loading": "โมเดลจำแนกอารมณ์ ONNX กำลังโหลด โปรดรอสักครู่",
+    "error_generic": "เกิดข้อผิดพลาดที่ไม่คาดคิด"
   }
 }

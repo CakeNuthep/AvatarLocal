@@ -57,6 +57,8 @@ export class AudioQueueScheduler {
   private onSpeakingStart?: () => void;
   private onSpeakingEnd?: () => void;
   private onSentenceStart?: (text: string, emotion?: string) => void;
+  private turnStartTime = 0;
+  private isFirstSentenceInTurn = false;
 
   constructor(
     ttsProvider: TTSProvider,
@@ -69,6 +71,14 @@ export class AudioQueueScheduler {
     this.onSpeakingStart = options.onSpeakingStart;
     this.onSpeakingEnd = options.onSpeakingEnd;
     this.onSentenceStart = options.onSentenceStart;
+  }
+
+  /**
+   * Sets the start timestamp of the current conversation turn to measure delay.
+   */
+  setTurnStartTime(time: number): void {
+    this.turnStartTime = time;
+    this.isFirstSentenceInTurn = true;
   }
 
   /**
@@ -176,8 +186,11 @@ export class AudioQueueScheduler {
    */
   private async synthesizeItem(item: QueueItem, language: string): Promise<any> {
     item.status = 'synthesizing';
+    const ttsStart = performance.now();
     item.promise = this.ttsProvider.synthesize(item.text, language)
       .then((result) => {
+        const ttsDuration = performance.now() - ttsStart;
+        console.log(`[LATENCY PROFILE] TTS synthesis for "${item.text.substring(0, 20)}...": ${ttsDuration.toFixed(0)}ms`);
         item.status = 'ready';
         item.audioBuffer = result.audioBuffer;
         item.mouthCues = result.mouthCues;
@@ -253,6 +266,12 @@ export class AudioQueueScheduler {
       } else {
         this.onSentenceStart(item.text);
       }
+    }
+
+    if (this.isFirstSentenceInTurn) {
+      this.isFirstSentenceInTurn = false;
+      const totalLatency = performance.now() - this.turnStartTime;
+      console.log(`[LATENCY PROFILE] Total latency to first audio byte: ${totalLatency.toFixed(0)}ms`);
     }
 
     const source = this.audioContext.createBufferSource();

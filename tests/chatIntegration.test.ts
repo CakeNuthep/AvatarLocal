@@ -92,7 +92,8 @@ describe('Chat Integration Thunk', () => {
     expect(chatStreamSpy).toHaveBeenCalledWith(
       expect.any(Array),
       'en',
-      expect.any(Function)
+      expect.any(Function),
+      expect.any(AbortSignal)
     );
   });
 

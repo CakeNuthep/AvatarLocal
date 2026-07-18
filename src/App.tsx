@@ -7,6 +7,23 @@ import './App.css'
 function App() {
   const { t } = useTranslation()
 
+  const params = new URLSearchParams(window.location.search)
+  const isStreamMode = params.get('mode') === 'stream'
+  const chroma = params.get('chroma') || 'transparent'
+
+  if (isStreamMode) {
+    const chromaClass = chroma === 'green' ? 'chroma-green' : 'chroma-transparent'
+    return (
+      <div className={`app-container streamer-mode ${chromaClass}`}>
+        <main className="app-main streamer-mode">
+          <div className="avatar-section streamer-mode">
+            <AvatarCanvas />
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="app-container">
       <header className="app-header">

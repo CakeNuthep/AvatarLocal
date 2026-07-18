@@ -45,6 +45,33 @@ export default function ChatUI() {
     return audioContextRef.current
   }
 
+  const getLocalizedError = (err: string) => {
+    if (!err) return '';
+    const lower = err.toLowerCase();
+    if (lower.includes('ollama') || lower.includes('failed to fetch') || lower.includes('unreachable') || lower.includes('stream chat request failed')) {
+      return t('error_llm_unreachable', { defaultValue: 'LLM is unreachable. Verify Ollama is running on port 11434.' });
+    }
+    if (lower.includes('tts') || lower.includes('piper') || lower.includes('synthesis')) {
+      return t('error_tts_failed', { defaultValue: 'TTS synthesis failed. Verify the TTS server is running on port 5002.' });
+    }
+    if (lower.includes('model') || lower.includes('transformers') || lower.includes('loading')) {
+      return t('error_model_loading', { defaultValue: 'ONNX classifier model is still loading. Please wait.' });
+    }
+    return err;
+  }
+
+  const handleRetry = async () => {
+    const userMsg = messages.filter((m) => m.role === 'user').slice(-1)[0];
+    if (userMsg) {
+      try {
+        const audioContext = await initAudioContext()
+        await dispatch(sendUserMessage({ text: userMsg.content, audioContext }))
+      } catch (err) {
+        console.error('Failed to retry send message:', err)
+      }
+    }
+  }
+
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault()
     const trimmedInput = input.trim()
@@ -213,7 +240,12 @@ export default function ChatUI() {
 
         {error && (
           <div className="error-banner">
-            ⚠️ {t('error_message', { defaultValue: 'Error' })}: {error}
+            <span>
+              ⚠️ {t('error_message', { defaultValue: 'Error' })}: {getLocalizedError(error)}
+            </span>
+            <button type="button" onClick={handleRetry} className="retry-btn">
+              🔄 {t('retry', { defaultValue: 'Retry' })}
+            </button>
           </div>
         )}
 

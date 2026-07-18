@@ -281,6 +281,35 @@
   border-radius: 12px;
   padding: 12px 18px;
   font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.retry-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fecaca;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.retry-btn:hover {
+  background: rgba(239, 68, 68, 0.35);
+  border-color: rgba(239, 68, 68, 0.6);
+  transform: translateY(-1px);
+}
+
+.retry-btn:active {
+  transform: translateY(0);
 }
 
 /* Form and Inputs */
@@ -445,3 +474,38 @@
 .inline-emotion-tag.angry { color: #f87171; background: rgba(248, 113, 113, 0.08); }
 .inline-emotion-tag.surprised { color: #f472b6; background: rgba(244, 114, 182, 0.08); }
 .inline-emotion-tag.neutral { color: #9ca3af; background: rgba(156, 163, 175, 0.08); }
+
+/* OBS Streamer Overlay Mode */
+.app-container.streamer-mode {
+  height: 100vh;
+  width: 100vw;
+  max-width: none;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.app-container.streamer-mode.chroma-green {
+  background: #00ff00 !important;
+}
+
+.app-container.streamer-mode.chroma-transparent {
+  background: transparent !important;
+}
+
+.app-main.streamer-mode {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  gap: 0;
+}
+
+.avatar-section.streamer-mode {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent !important;
+}

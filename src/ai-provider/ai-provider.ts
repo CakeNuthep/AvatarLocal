@@ -27,6 +27,7 @@ export abstract class AIProvider {
   abstract chatStream(
     messages: ChatMessage[],
     language: string,
-    onToken: (token: string) => void
+    onToken: (token: string) => void,
+    signal?: AbortSignal
   ): Promise<string>;
 }

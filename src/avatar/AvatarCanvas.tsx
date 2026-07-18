@@ -11,6 +11,7 @@ import { useIdleAnimation } from './useIdleAnimation'
 import { useLookAtController } from './useLookAtController'
 import AvatarDebugPanel from './AvatarDebugPanel'
 import { type RootState, selectCurrentEmotion } from '../store'
+import { activeLipSyncDriverRef } from '../ai-provider/lip-sync-driver'
 
 interface AvatarModelProps {
   onLoaded: (vrm: VRM) => void
@@ -43,8 +44,17 @@ function AvatarModel({ onLoaded, onControllerReady }: AvatarModelProps) {
 
   // Drive lip sync (mouth open) inside the R3F render loop only when speaking
   useFrame(() => {
-    if (controller && vrm && isSpeakingRef.current) {
-      controller.setExpression('aa', mouthOpenRef.current)
+    if (controller && vrm) {
+      if (activeLipSyncDriverRef.current) {
+        // High-performance real-time analysis path (bypasses Redux)
+        const volume = activeLipSyncDriverRef.current.update()
+        const cappedMouthOpen = Math.min(0.85, volume)
+        controller.setExpression('aa', cappedMouthOpen)
+      } else if (isSpeakingRef.current) {
+        // Fallback/Redux control path
+        const cappedMouthOpen = Math.min(0.85, mouthOpenRef.current)
+        controller.setExpression('aa', cappedMouthOpen)
+      }
     }
   })
 

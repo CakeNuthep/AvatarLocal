@@ -5,6 +5,8 @@ import { type RootState, setUILanguage } from './store'
 import AvatarCanvas from './avatar/AvatarCanvas'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
+import { PiperTTSProvider } from './ai-provider/piper-tts-provider'
+import { AudioQueueScheduler } from './ai-provider/audio-queue-scheduler'
 import './App.css'
 
 function App() {
@@ -16,6 +18,24 @@ function App() {
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang)
     dispatch(setUILanguage(lang))
+  }
+
+  const handleTestTTS = async () => {
+    const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext
+    if (!AudioCtx) {
+      alert("Web Audio API is not supported in this browser")
+      return
+    }
+    const audioCtx = new AudioCtx()
+    if (audioCtx.state === 'suspended') {
+      await audioCtx.resume()
+    }
+    const ttsProvider = new PiperTTSProvider()
+    const scheduler = new AudioQueueScheduler(ttsProvider, audioCtx)
+    scheduler.enqueueText(
+      "Hello! I am your AI avatar. Let's verify that the voice works and my lips move in sync with the audio.",
+      "en"
+    )
   }
 
   return (
@@ -42,6 +62,23 @@ function App() {
               style={{ fontWeight: uiLanguage === 'th' ? 'bold' : 'normal' }}
             >
               TH
+            </button>
+          </div>
+          <div style={{ margin: '15px 0' }}>
+            <button
+              onClick={handleTestTTS}
+              style={{
+                padding: '10px 20px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                background: '#8b5cf6',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+              }}
+            >
+              Test Voice & Lip-Sync
             </button>
           </div>
         </div>

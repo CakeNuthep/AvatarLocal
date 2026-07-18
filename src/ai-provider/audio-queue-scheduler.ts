@@ -28,13 +28,14 @@ export function splitSentences(text: string): string[] {
 export interface AudioQueueSchedulerOptions {
   onSpeakingStart?: () => void;
   onSpeakingEnd?: () => void;
-  onSentenceStart?: (text: string) => void;
+  onSentenceStart?: (text: string, emotion?: string) => void;
   prefetchDepth?: number;
 }
 
 interface QueueItem {
   text: string;
   status: 'pending' | 'synthesizing' | 'ready' | 'playing' | 'completed' | 'failed';
+  emotion?: string;
   audioBuffer?: AudioBuffer;
   mouthCues?: RhubarbMouthCue[];
   promise?: Promise<any>;
@@ -55,7 +56,7 @@ export class AudioQueueScheduler {
   private prefetchDepth: number;
   private onSpeakingStart?: () => void;
   private onSpeakingEnd?: () => void;
-  private onSentenceStart?: (text: string) => void;
+  private onSentenceStart?: (text: string, emotion?: string) => void;
 
   constructor(
     ttsProvider: TTSProvider,
@@ -68,6 +69,29 @@ export class AudioQueueScheduler {
     this.onSpeakingStart = options.onSpeakingStart;
     this.onSpeakingEnd = options.onSpeakingEnd;
     this.onSentenceStart = options.onSentenceStart;
+  }
+
+  /**
+   * Enqueues a single sentence with a pre-parsed emotion.
+   */
+  enqueueSentence(text: string, emotion: string, language: string): void {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+
+    if (!this.isSpeakingActive) {
+      this.isSpeakingActive = true;
+      if (this.onSpeakingStart) {
+        this.onSpeakingStart();
+      }
+    }
+
+    this.queue.push({
+      text: trimmed,
+      emotion,
+      status: 'pending',
+    });
+
+    this.processQueue(language);
   }
 
   /**
@@ -224,7 +248,11 @@ export class AudioQueueScheduler {
     item.status = 'playing';
 
     if (this.onSentenceStart) {
-      this.onSentenceStart(item.text);
+      if (item.emotion !== undefined) {
+        this.onSentenceStart(item.text, item.emotion);
+      } else {
+        this.onSentenceStart(item.text);
+      }
     }
 
     const source = this.audioContext.createBufferSource();

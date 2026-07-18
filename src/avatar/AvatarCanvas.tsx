@@ -101,6 +101,27 @@ function AvatarModel({ currentEmotion, onLoaded, onControllerReady }: AvatarMode
         controller.setExpression('oh', 0)
         controller.setExpression('ou', 0)
       }
+
+      // Sync debug panel sliders in real-time if elements are present in the DOM
+      if (vrm.expressionManager) {
+        const expressions = vrm.expressionManager.expressions || []
+        expressions.forEach((expression) => {
+          const expName = (expression as any).expressionName || expression.name
+          if (expName) {
+            const val = vrm.expressionManager!.getValue(expName) ?? 0
+
+            const slider = document.getElementById(`slider-input-${expName}`) as HTMLInputElement | null
+            if (slider) {
+              slider.value = val.toString()
+            }
+
+            const text = document.getElementById(`val-indicator-${expName}`) as HTMLSpanElement | null
+            if (text) {
+              text.innerText = val.toFixed(2)
+            }
+          }
+        })
+      }
     }
   })
 
@@ -139,8 +160,12 @@ export default function AvatarCanvas() {
     controllerRef.current = controller
   }, [])
 
+  const params = new URLSearchParams(window.location.search)
+  const isStreamMode = params.get('mode') === 'stream'
+  const containerBg = isStreamMode ? 'transparent' : '#111'
+
   return (
-    <div style={{ width: '100%', height: '100%', minHeight: '400px', background: '#111', position: 'relative' }}>
+    <div style={{ width: '100%', height: '100%', minHeight: '400px', background: containerBg, position: 'relative' }}>
       <Canvas
         shadows
         gl={{ toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
@@ -169,11 +194,13 @@ export default function AvatarCanvas() {
         </EffectComposer>
       </Canvas>
 
-      <AvatarDebugPanel
-        vrm={vrm}
-        setExpression={handleSetExpression}
-        reset={handleReset}
-      />
+      {!isStreamMode && (
+        <AvatarDebugPanel
+          vrm={vrm}
+          setExpression={handleSetExpression}
+          reset={handleReset}
+        />
+      )}
     </div>
   )
 }

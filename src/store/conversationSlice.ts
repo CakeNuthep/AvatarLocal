@@ -20,6 +20,7 @@ const initialState: ConversationState = {
 };
 
 let globalScheduler: AudioQueueScheduler | null = null;
+let activeAbortController: AbortController | null = null;
 
 /**
  * Gets or creates the global AudioQueueScheduler instance.
@@ -58,9 +59,20 @@ export const sendUserMessage = createAsyncThunk<
   const state = thunkAPI.getState();
   const language = state.ui.uiLanguage;
 
+  // Track start of conversation turn for latency profiling
+  const turnStartTime = performance.now();
+
   // 1. Get scheduler and stop any active speech/synthesis
   const scheduler = getScheduler(dispatch, audioContext);
   scheduler.stop();
+  scheduler.setTurnStartTime(turnStartTime);
+
+  // Abort any active LLM stream fetch request
+  if (activeAbortController) {
+    activeAbortController.abort();
+  }
+  activeAbortController = new AbortController();
+  const signal = activeAbortController.signal;
 
   // Add user message to conversation history
   dispatch(conversationSlice.actions.addUserMessage(text));
@@ -83,6 +95,7 @@ export const sendUserMessage = createAsyncThunk<
 
     const aiProvider = new OllamaProvider();
     let responseText = '';
+    let firstTokenReceived = false;
 
     // Initialize stateful parser that splits sentences and extracts emotion tags
     const streamParser = new EmotionStreamParser((sentence, emotion) => {
@@ -91,10 +104,18 @@ export const sendUserMessage = createAsyncThunk<
 
     // 3. Stream from Ollama
     await aiProvider.chatStream(trimmedMessages, language, (token) => {
+      if (!firstTokenReceived) {
+        firstTokenReceived = true;
+        const ttft = performance.now() - turnStartTime;
+        console.log(`[LATENCY PROFILE] LLM Time-To-First-Token (TTFT): ${ttft.toFixed(0)}ms`);
+      }
       responseText += token;
       console.log('[DEBUG LLM Token] Received token:', token);
       streamParser.ingest(token);
-    });
+    }, signal);
+
+    const llmDuration = performance.now() - turnStartTime;
+    console.log(`[LATENCY PROFILE] LLM total response generation time: ${llmDuration.toFixed(0)}ms`);
 
     // Flush any remaining tokens left in the stream buffer
     streamParser.flush();
@@ -113,6 +134,10 @@ export const sendUserMessage = createAsyncThunk<
 
     return responseText;
   } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.log('[DEBUG LLM Request] LLM stream request aborted.');
+      return '';
+    }
     dispatch(conversationSlice.actions.setStatus('error'));
     dispatch(conversationSlice.actions.setError(error.message || 'An error occurred'));
     dispatch(setPipelineStatus('idle'));

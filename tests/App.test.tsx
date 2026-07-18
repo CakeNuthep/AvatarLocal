@@ -97,6 +97,10 @@ test('renders chat input and triggers synthesis on send button click', async () 
     </Provider>
   )
 
+  // Reset to English first to ensure English UI strings are queried
+  const enButton = screen.getByRole('button', { name: /Switch to English/i })
+  fireEvent.click(enButton)
+
   const textarea = screen.getByPlaceholderText('Say something...');
   const sendButton = screen.getByText('Send');
 

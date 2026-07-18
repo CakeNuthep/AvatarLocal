@@ -3,6 +3,21 @@
     "welcome": "Welcome to your AI Avatar",
     "get_started": "Get started",
     "change_language": "Change Language",
-    "count_is": "Count is {{count}}"
+    "app_title": "AURA AI",
+    "status_thinking": "Thinking...",
+    "status_speaking": "Speaking...",
+    "status_idle": "Online",
+    "hide_thinking": "Hide Thinking",
+    "show_thinking": "Show Thinking",
+    "chat_start_hint": "Ask me anything to start chatting!",
+    "thinking_process": "Thought Process",
+    "error_message": "Error",
+    "chat_placeholder": "Say something...",
+    "send": "Send",
+    "retry": "Retry",
+    "error_llm_unreachable": "LLM is unreachable. Verify Ollama is running on port 11434.",
+    "error_tts_failed": "Text-to-Speech synthesis failed. Verify the TTS server is running on port 5002.",
+    "error_model_loading": "ONNX classifier model is still loading. Please wait.",
+    "error_generic": "An unexpected error occurred."
   }
 }

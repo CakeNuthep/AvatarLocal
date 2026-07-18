@@ -69,4 +69,36 @@ describe('AvatarDebugPanel', () => {
     // Value indicators should update to 0.00
     expect(screen.getByText('0.00')).toBeInTheDocument()
   })
+
+  test('collapses and expands controls when clicking header toggle', () => {
+    const mockVRM = {
+      expressionManager: {
+        expressions: [
+          { name: 'happy' },
+        ],
+        getValue: vi.fn().mockReturnValue(0),
+      },
+    } as unknown as VRM
+
+    render(<AvatarDebugPanel vrm={mockVRM} setExpression={vi.fn()} reset={vi.fn()} />)
+
+    // Sliders are rendered initially
+    expect(screen.getByText('happy')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Reset/i })).toBeInTheDocument()
+
+    // Click the toggle area
+    const toggleArea = screen.getByText('Expression Controls')
+    fireEvent.click(toggleArea)
+
+    // Sliders and Reset button should be hidden
+    expect(screen.queryByText('happy')).toBeNull()
+    expect(screen.queryByRole('button', { name: /Reset/i })).toBeNull()
+
+    // Click again to expand
+    fireEvent.click(toggleArea)
+
+    // Sliders should be visible again
+    expect(screen.getByText('happy')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Reset/i })).toBeInTheDocument()
+  })
 })

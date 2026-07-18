@@ -179,24 +179,24 @@
 
 ## Phase 6 — Integration & Polish
 
-- [ ] **6.1 Full pipeline wiring**
+- [x] **6.1 Full pipeline wiring**
   - *Skills*: Systems integration, debugging async chains, Redux DevTools.
   - *AI Prompt*: `"Review this pipeline code [paste] for race conditions — specifically, what happens if the user sends a new message while TTS/lip-sync from the previous response is still playing, or if they switch language mid-pipeline?"`
-- [ ] **6.2 Add "interrupt" handling**
+- [x] **6.2 Add "interrupt" handling**
   - *Skills*: State machines, Redux middleware.
   - *AI Prompt*: `"Add an interrupt mechanism: if a new user message arrives while avatarSlice.pipelineStatus === 'speaking', cancel the current audio playback and lip-sync loop cleanly, dispatch status back to idle, before starting the new response."`
   - *Unit tests*: Test state machine transitions (idle → thinking → speaking → idle) reject invalid transitions and correctly reset on interrupt.
-- [ ] **6.3 Localize all UI strings with `react-i18next`; add `<LanguageSwitcher />` component**
+- [x] **6.3 Localize all UI strings with `react-i18next`; add `<LanguageSwitcher />` component**
   - *Skills*: `react-i18next`, React component design.
   - *AI Prompt*: `"Extract all hardcoded UI strings into locales/en.json and locales/th.json, wire components to use useTranslation(), and build a <LanguageSwitcher /> component (dropdown) placed in the app header that updates both UI and conversation language."`
   - *Unit tests*: Test every key used in components exists in all locale files (a simple script/test comparing key sets across JSON files catches missing translations); React Testing Library test that `<LanguageSwitcher />` dispatches `setLanguage` and calls `i18next.changeLanguage` on selection.
-- [ ] **6.4 Error handling UI (Ollama down, TTS failed, model still loading)**
+- [x] **6.4 Error handling UI (Ollama down, TTS failed, model still loading)**
   - *Skills*: UX for error states.
   - *AI Prompt*: `"Design simple UI states/toasts for: LLM unreachable, TTS synthesis failed, model still loading — each with a retry action, all strings pulled from i18next."`
-- [ ] **6.5 Latency measurement + optimization pass**
+- [x] **6.5 Latency measurement + optimization pass**
   - *Skills*: Performance profiling.
   - *AI Prompt*: `"Add timing instrumentation around each pipeline stage (STT, LLM, TTS, first-audio-byte) and log them, so I can identify the slowest stage."`
-- [ ] **6.6 Add OBS Chroma-key and Transparent window capture modes**
+- [x] **6.6 Add OBS Chroma-key and Transparent window capture modes**
   - *Skills*: CSS transparency, React routing / query parameters, R3F clearColor.
   - *AI Prompt*: `"How do I implement a streamer overlay mode in my React application? When a query param like ?mode=stream is present, it should hide all UI overlays, center the avatar in the viewport, and configure the R3F Canvas and body styles to be transparent or solid green (#00ff00) for OBS chroma-key capture."`
   - *Unit tests*: Test components hide themselves when overlay mode is active; test Canvas options are configured correctly when transparent flag is set.

@@ -94,7 +94,8 @@ ${exampleText}`;
   async chatStream(
     messages: ChatMessage[],
     language: string,
-    onToken: (token: string) => void
+    onToken: (token: string) => void,
+    signal?: AbortSignal
   ): Promise<string> {
     const payload = {
       model: this.model,
@@ -106,6 +107,7 @@ ${exampleText}`;
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal,
     });
 
     if (!response.ok) {

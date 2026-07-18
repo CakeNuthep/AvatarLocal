@@ -29,3 +29,13 @@ vi.mock('@react-three/postprocessing', () => ({
   EffectComposer: ({ children }: { children: React.ReactNode }) => React.createElement('div', { 'data-testid': 'effect-composer' }, children),
   Bloom: () => React.createElement('div', { 'data-testid': 'bloom-effect' }),
 }))
+
+// Mock transformers.js globally to avoid network downloads during tests
+vi.mock('@xenova/transformers', () => {
+  const mockClassifier = vi.fn().mockImplementation(async () => {
+    return [{ label: 'neutral', score: 1.0 }]
+  })
+  return {
+    pipeline: vi.fn().mockResolvedValue(mockClassifier),
+  }
+})

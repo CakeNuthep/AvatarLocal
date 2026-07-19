@@ -19,14 +19,26 @@ The application streams chat requests from a local Ollama service running on por
 3. Verify Ollama is running and responsive on `http://localhost:11434`.
 
 ### B. Text-to-Speech (TTS) Server
-The application communicates with a local text-to-speech engine running on port `5002` (proxied via Vite at `/api/tts`).
+The application supports two local text-to-speech engines: **Piper (Local)** on port `5002` (proxied via Vite at `/api/tts`), and **Coqui (Local)** on port `5003` (proxied via Vite at `/api/coqui`). You can dynamically switch between them using the glassmorphic select dropdown menu in the app header.
 
+#### Option 1: Piper TTS Server (Port 5002)
 1. Run the zero-dependency Python HTTP server script inside the virtual environment:
    ```powershell
    .\.venv-tts\Scripts\python.exe tts_server.py
    ```
 2. The server will start on `http://127.0.0.1:5002`.
-3. **Auto-Download Support**: Missing voice models (e.g. Thai `th_TH-apatcha-medium` or English `en_US-lessac-medium`) are automatically pulled from Hugging Face and saved to the `resource/tts` directory on the first corresponding request.
+3. **Auto-Download Support**: Missing voice models (e.g. English `en_US-lessac-medium`) are automatically pulled from Hugging Face and saved to the `resource/tts` directory on the first corresponding request.
+   > [!NOTE]
+   > Official Piper repositories lack stable Thai voice models. If Piper is selected for Thai language requests, it will speak using the English model phonetic fallback. Use Coqui for full native Thai voice support.
+
+#### Option 2: Coqui XTTS Server (Port 5003)
+For high-quality native Thai speech synthesis and advanced multilingual voice cloning:
+1. Start the local Coqui/XTTS server on port `5003`:
+   ```powershell
+   $env:TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD="1"; .\.venv-tts\Scripts\python.exe -m TTS.server.server --model_path "C:\Users\Cake\AppData\Local\tts\tts_models--multilingual--multi-dataset--xtts_v2" --config_path "C:\Users\Cake\AppData\Local\tts\tts_models--multilingual--multi-dataset--xtts_v2\config.json" --port 5003
+   ```
+2. The server will automatically load the local cached **XTTS v2** multilingual model files (pre-downloaded to your AppData Local directory) and listen on port `5003` (ignoring PyTorch 2.6+ weights-only pickling checks).
+3. Switch the active engine to **Coqui (Local)** and the language to **TH** in the header to get proper Thai speech.
 
 ---
 

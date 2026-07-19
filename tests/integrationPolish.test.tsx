@@ -8,12 +8,14 @@ import { conversationReducer, sendUserMessage } from '../src/store/conversationS
 import { avatarReducer } from '../src/store/avatarSlice';
 import { OllamaProvider } from '../src/ai-provider/ollama-provider';
 import { PiperTTSProvider } from '../src/ai-provider/piper-tts-provider';
+import { CoquiTTSProvider } from '../src/ai-provider/coqui-tts-provider';
 import enTranslation from '../src/locales/en.json';
 import thTranslation from '../src/locales/th.json';
 
 // Mock Ollama & TTS Providers
 vi.mock('../src/ai-provider/ollama-provider');
 vi.mock('../src/ai-provider/piper-tts-provider');
+vi.mock('../src/ai-provider/coqui-tts-provider');
 
 // Mock AvatarCanvas to avoid Three.js GPU rendering issues
 vi.mock('../src/avatar/AvatarCanvas', () => ({
@@ -30,13 +32,14 @@ describe('Phase 6 — Integration & Polish', () => {
     mockAudioContext = {
       currentTime: 0,
       decodeAudioData: vi.fn().mockResolvedValue({ duration: 1.0 }),
-      createBufferSource: vi.fn().mockReturnValue({
+      createBufferSource: vi.fn().mockImplementation(() => ({
         buffer: null,
         connect: vi.fn(),
         start: vi.fn(),
         stop: vi.fn(),
-        onended: null
-      }),
+        onended: null,
+        context: mockAudioContext
+      })),
       createAnalyser: vi.fn().mockReturnValue({
         fftSize: 1024,
         frequencyBinCount: 512,
@@ -47,9 +50,23 @@ describe('Phase 6 — Integration & Polish', () => {
       destination: {}
     };
 
+    const mockUIReducer = (state = { uiLanguage: 'en', ttsEngine: 'piper' }, action: any) => {
+      if (action.type === 'ui/setTTSEngine') {
+        return { ...state, ttsEngine: action.payload };
+      }
+      return state;
+    };
+
+    OllamaProvider.prototype.chatStream = vi.fn().mockImplementation(
+      async (messages: any, language: string, onToken: any, signal?: AbortSignal) => {
+        onToken('[happy] Hello world!');
+        return '[happy] Hello world!';
+      }
+    );
+
     store = configureStore({
       reducer: {
-        ui: (state = { uiLanguage: 'en' }) => state,
+        ui: mockUIReducer,
         avatar: avatarReducer,
         conversation: conversationReducer
       }
@@ -161,6 +178,32 @@ describe('Phase 6 — Integration & Polish', () => {
       enKeys.forEach((key) => {
         expect(thKeys).toContain(key);
       });
+    });
+  });
+
+  describe('TTS Engine Selection', () => {
+    it('switches TTS Engine in UI state and changes synthesis provider dynamically', async () => {
+      const piperSynthesizeSpy = vi.fn().mockResolvedValue({ audioBuffer: { duration: 1.0 }, mouthCues: [] });
+      const coquiSynthesizeSpy = vi.fn().mockResolvedValue({ audioBuffer: { duration: 1.0 }, mouthCues: [] });
+      PiperTTSProvider.prototype.synthesize = piperSynthesizeSpy;
+      CoquiTTSProvider.prototype.synthesize = coquiSynthesizeSpy;
+
+      // 1. Initial engine is piper, run dispatch
+      await store.dispatch(sendUserMessage({ text: 'Test Piper', audioContext: mockAudioContext as any }));
+      expect(piperSynthesizeSpy).toHaveBeenCalled();
+      expect(coquiSynthesizeSpy).not.toHaveBeenCalled();
+
+      // Reset mock tracking
+      vi.clearAllMocks();
+
+      // 2. Change engine to coqui
+      store.dispatch({ type: 'ui/setTTSEngine', payload: 'coqui' });
+      expect(store.getState().ui.ttsEngine).toBe('coqui');
+
+      // 3. Send message again, verify Coqui is used
+      await store.dispatch(sendUserMessage({ text: 'Test Coqui', audioContext: mockAudioContext as any }));
+      expect(coquiSynthesizeSpy).toHaveBeenCalled();
+      expect(piperSynthesizeSpy).not.toHaveBeenCalled();
     });
   });
 });

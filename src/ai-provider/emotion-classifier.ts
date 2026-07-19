@@ -1,4 +1,8 @@
-import { pipeline } from '@xenova/transformers';
+import { pipeline, env } from '@xenova/transformers';
+
+// Disable local model checks to avoid fetching from local dev server paths
+// which fall back to index.html (causing JSON parse errors on '<!doctype html>')
+env.allowLocalModels = false;
 
 let classifierPromise: any = null;
 

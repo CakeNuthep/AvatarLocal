@@ -6,12 +6,14 @@ interface UIState {
   uiLanguage: string
   theme: 'dark' | 'light'
   showThinking: boolean
+  ttsEngine: 'piper' | 'coqui'
 }
 
 const initialState: UIState = {
   uiLanguage: 'en',
   theme: 'dark',
   showThinking: false,
+  ttsEngine: 'piper',
 }
 
 const uiSlice = createSlice({
@@ -27,10 +29,13 @@ const uiSlice = createSlice({
     toggleShowThinking(state) {
       state.showThinking = !state.showThinking
     },
+    setTTSEngine(state, action: PayloadAction<'piper' | 'coqui'>) {
+      state.ttsEngine = action.payload
+    },
   },
 })
 
-export const { setUILanguage, toggleTheme, toggleShowThinking } = uiSlice.actions
+export const { setUILanguage, toggleTheme, toggleShowThinking, setTTSEngine } = uiSlice.actions
 export * from './avatarSlice'
 export * from './conversationSlice'
 

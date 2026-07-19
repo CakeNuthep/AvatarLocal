@@ -51,7 +51,7 @@ describe('PiperTTSProvider', () => {
     const provider = new PiperTTSProvider({ audioContext: mockAudioContext });
     const result = await provider.synthesize('สวัสดี', 'th');
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/tts?text=%E0%B8%AA%E0%B8%A7%E0%B8%B1%E0%B8%AA%E0%B8%94%E0%B8%B5&speaker=en_US-lessac-medium');
+    expect(fetchMock).toHaveBeenCalledWith('/api/tts?text=%E0%B8%AA%E0%B8%A7%E0%B8%B1%E0%B8%AA%E0%B8%94%E0%B8%B5&speaker=th_TH-apatcha-medium');
     expect(mockAudioContext.decodeAudioData).toHaveBeenCalled();
     expect(result.audioBuffer).toBe(mockAudioBuffer);
     expect(result.mouthCues).toEqual([{ start: 0.1, end: 0.5, value: 'B' }]);

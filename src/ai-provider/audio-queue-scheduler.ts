@@ -9,6 +9,7 @@ export const activeRhubarbCuesRef = {
   current: null as {
     cues: RhubarbMouthCue[];
     startTime: number; // audioCtx.currentTime when playback starts
+    audioContext: AudioContext;
   } | null
 };
 
@@ -71,6 +72,13 @@ export class AudioQueueScheduler {
     this.onSpeakingStart = options.onSpeakingStart;
     this.onSpeakingEnd = options.onSpeakingEnd;
     this.onSentenceStart = options.onSentenceStart;
+  }
+
+  /**
+   * Dynamically switches the active TTS provider.
+   */
+  setTTSProvider(ttsProvider: TTSProvider): void {
+    this.ttsProvider = ttsProvider;
   }
 
   /**
@@ -288,6 +296,7 @@ export class AudioQueueScheduler {
       activeRhubarbCuesRef.current = {
         cues: item.mouthCues,
         startTime: this.audioContext.currentTime,
+        audioContext: this.audioContext,
       };
     } else {
       activeRhubarbCuesRef.current = null;

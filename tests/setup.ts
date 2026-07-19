@@ -37,5 +37,8 @@ vi.mock('@xenova/transformers', () => {
   })
   return {
     pipeline: vi.fn().mockResolvedValue(mockClassifier),
+    env: {
+      allowLocalModels: true,
+    },
   }
 })

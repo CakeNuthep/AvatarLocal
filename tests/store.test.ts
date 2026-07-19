@@ -10,6 +10,7 @@ describe('Redux store test', () => {
       uiLanguage: 'en',
       theme: 'dark',
       showThinking: false,
+      ttsEngine: 'piper',
     })
     expect(state.avatar).toEqual({
       currentEmotion: 'neutral',

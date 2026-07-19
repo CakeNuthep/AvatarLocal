@@ -16,6 +16,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/tts/, ''),
       },
+      '/api/coqui': {
+        target: 'http://localhost:5003',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/coqui/, ''),
+      },
     },
   },
 })

@@ -3,6 +3,7 @@ import { OllamaProvider } from '../ai-provider/ollama-provider';
 import { EmotionStreamParser } from '../ai-provider/stream-parser';
 import { AudioQueueScheduler } from '../ai-provider/audio-queue-scheduler';
 import { PiperTTSProvider } from '../ai-provider/piper-tts-provider';
+import { CoquiTTSProvider } from '../ai-provider/coqui-tts-provider';
 import { setPipelineStatus, setCurrentEmotion } from './avatarSlice';
 import { classifyTextEmotion } from '../ai-provider/emotion-classifier';
 import type { ChatMessage } from '../ai-provider/ai-provider';
@@ -64,6 +65,10 @@ export const sendUserMessage = createAsyncThunk<
 
   // 1. Get scheduler and stop any active speech/synthesis
   const scheduler = getScheduler(dispatch, audioContext);
+  const ttsEngine = state.ui.ttsEngine || 'piper';
+  const ttsProvider = ttsEngine === 'coqui' ? new CoquiTTSProvider() : new PiperTTSProvider();
+  scheduler.setTTSProvider(ttsProvider);
+  
   scheduler.stop();
   scheduler.setTurnStartTime(turnStartTime);
 

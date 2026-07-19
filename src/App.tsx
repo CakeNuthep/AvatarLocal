@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import AvatarCanvas from './avatar/AvatarCanvas'
 import ChatUI from './ui/ChatUI'
 import LanguageSwitcher from './ui/LanguageSwitcher'
+import TTSEngineSelector from './ui/TTSEngineSelector'
 import './App.css'
 
 function App() {
@@ -28,7 +29,10 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <h1 className="app-title">{t('app_title', { defaultValue: 'AURA AI' })}</h1>
-        <LanguageSwitcher />
+        <div className="header-controls">
+          <TTSEngineSelector />
+          <LanguageSwitcher />
+        </div>
       </header>
       <main className="app-main">
         <div className="avatar-section">

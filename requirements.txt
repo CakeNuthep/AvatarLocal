@@ -5,3 +5,12 @@ packaging==26.2
 pathvalidate==3.3.1
 piper-tts==1.4.2
 protobuf==7.35.1
+TTS==0.22.0
+
+# --- TTS Start Commands ---
+#
+# 1. Start Piper TTS Server (Port 5002):
+#    .\.venv-tts\Scripts\python.exe tts_server.py
+#
+# 2. Start Coqui XTTS Server (Port 5003):
+#    $env:TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD="1"; .\.venv-tts\Scripts\python.exe -m TTS.server.server --model_path "C:\Users\Cake\AppData\Local\tts\tts_models--multilingual--multi-dataset--xtts_v2" --config_path "C:\Users\Cake\AppData\Local\tts\tts_models--multilingual--multi-dataset--xtts_v2\config.json" --port 5003

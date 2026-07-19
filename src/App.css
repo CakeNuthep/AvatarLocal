@@ -402,6 +402,48 @@
   color: white;
 }
 
+.header-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.tts-selector-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(31, 41, 55, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 4px 10px;
+  border-radius: 12px;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.tts-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tts-select {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  padding-right: 4px;
+}
+
+.tts-select option {
+  background: #1f2937;
+  color: white;
+}
+
 .chat-header-actions {
   display: flex;
   gap: 8px;

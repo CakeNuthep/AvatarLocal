@@ -19,7 +19,7 @@ export class PiperTTSProvider extends TTSProvider {
     this.apiUrl = options.apiUrl || '/api/tts';
     this.voiceMap = options.voiceMap || {
       en: 'en_US-lessac-medium',
-      th: 'en_US-lessac-medium', // Fallback: Piper lacks stable Thai models
+      th: 'th_TH-apatcha-medium',
     };
   }
 
@@ -37,7 +37,7 @@ export class PiperTTSProvider extends TTSProvider {
     }
 
     if (language.toLowerCase() === 'th') {
-      console.warn('[WARN Piper] Thai language selected but official Piper repository does not have stable Thai voice models. Falling back to English voice: en_US-lessac-medium.');
+      console.log('[DEBUG Piper] Thai language selected. Using voice model: th_TH-apatcha-medium.');
     }
 
     const queryUrl = `${this.apiUrl}?text=${encodeURIComponent(text)}&speaker=${encodeURIComponent(voice)}`;

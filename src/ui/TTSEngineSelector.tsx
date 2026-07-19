@@ -7,7 +7,7 @@ export default function TTSEngineSelector() {
   const currentEngine = useSelector((state: RootState) => state.ui.ttsEngine)
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const engine = e.target.value as 'piper' | 'coqui'
+    const engine = e.target.value as 'piper' | 'coqui' | 'kokoro'
     dispatch(setTTSEngine(engine))
   }
 
@@ -23,6 +23,7 @@ export default function TTSEngineSelector() {
       >
         <option value="piper">Piper (Local)</option>
         <option value="coqui">Coqui (Local)</option>
+        <option value="kokoro">Kokoro (Local)</option>
       </select>
     </div>
   )

@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Model weight resources
+resource/
+*.onnx
+*.bin
+*.pt
+*.pth

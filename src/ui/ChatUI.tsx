@@ -11,6 +11,7 @@ import {
   selectConversationError,
   toggleShowThinking,
 } from '../store'
+import type { ChatMessage } from '../ai-provider/ai-provider'
 
 export default function ChatUI() {
   const { t } = useTranslation()
@@ -39,10 +40,11 @@ export default function ChatUI() {
     if (!audioContextRef.current) {
       audioContextRef.current = new AudioCtx()
     }
-    if (audioContextRef.current.state === 'suspended') {
-      await audioContextRef.current.resume()
+    const ctx = audioContextRef.current as AudioContext
+    if (ctx.state === 'suspended') {
+      await ctx.resume()
     }
-    return audioContextRef.current
+    return ctx
   }
 
   const getLocalizedError = (err: string) => {
@@ -61,7 +63,7 @@ export default function ChatUI() {
   }
 
   const handleRetry = async () => {
-    const userMsg = messages.filter((m) => m.role === 'user').slice(-1)[0];
+    const userMsg = messages.filter((m: ChatMessage) => m.role === 'user').slice(-1)[0];
     if (userMsg) {
       try {
         const audioContext = await initAudioContext()
@@ -198,7 +200,7 @@ export default function ChatUI() {
             </p>
           </div>
         ) : (
-          messages.map((msg, index) => {
+          messages.map((msg: ChatMessage, index: number) => {
             const isUser = msg.role === 'user'
             const emotion = !isUser ? getMessageEmotion(msg.content) : null
             const { cleanedText, thinkingContent } = parseMessageContent(msg.content, showThinking)

@@ -24,18 +24,20 @@ export function useLookAtController(vrm: VRM | null, currentEmotion = 'neutral',
 
   // Configure target binding on load
   useEffect(() => {
-    if (!vrm) return
+    if (!vrm || !vrm.lookAt) return
 
     const prevTarget = vrm.lookAt.target
     vrm.lookAt.target = dummyTargetRef.current
 
     return () => {
-      vrm.lookAt.target = prevTarget
+      if (vrm.lookAt) {
+        vrm.lookAt.target = prevTarget
+      }
     }
   }, [vrm])
 
   useFrame((state, delta) => {
-    if (!vrm) return
+    if (!vrm || !vrm.lookAt) return
 
     // 1. Posture offset calculation
     const emotion = (currentEmotion || 'neutral').toLowerCase()

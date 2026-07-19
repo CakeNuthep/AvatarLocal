@@ -40,6 +40,15 @@ For high-quality native Thai speech synthesis and advanced multilingual voice cl
 2. The server will automatically load the local cached **XTTS v2** multilingual model files (pre-downloaded to your AppData Local directory) and listen on port `5003` (ignoring PyTorch 2.6+ weights-only pickling checks).
 3. Switch the active engine to **Coqui (Local)** and the language to **TH** in the header to get proper Thai speech.
 
+#### Option 3: Kokoro-82M ONNX Server (Port 5004)
+For fast, lightweight, CPU-friendly speech synthesis:
+1. Start the local Kokoro HTTP server on port `5004`:
+   ```powershell
+   .\.venv-tts\Scripts\python.exe kokoro_server.py
+   ```
+2. **Auto-Download Support**: Missing model files (`kokoro-v1.0.onnx` and `voices-v1.0.bin`) are automatically downloaded from GitHub releases and saved to the `resource/kokoro` directory on the first run.
+3. Switch the active engine to **Kokoro (Local)** in the header dropdown menu.
+
 ---
 
 ## 2. Frontend Development

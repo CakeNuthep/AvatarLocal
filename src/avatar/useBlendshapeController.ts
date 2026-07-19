@@ -75,7 +75,6 @@ export function useBlendshapeController(vrm: VRM | null) {
     if (!vrm?.expressionManager) return
 
     const lerps = activeLerpsRef.current
-    let needsUpdate = false
 
     for (const name in lerps) {
       const lerp = lerps[name]
@@ -85,7 +84,6 @@ export function useBlendshapeController(vrm: VRM | null) {
       const current = lerp.startWeight + (lerp.targetWeight - lerp.startWeight) * progress
 
       vrm.expressionManager.setValue(name, current)
-      needsUpdate = true
 
       if (progress >= 1) {
         delete lerps[name]

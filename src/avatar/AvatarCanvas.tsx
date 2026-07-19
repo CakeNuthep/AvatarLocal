@@ -169,7 +169,7 @@ export default function AvatarCanvas() {
       <Canvas
         shadows
         gl={{ toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
-        camera={{ position: [0, 1.4, 1.5], fof: 35 } as any}
+        camera={{ position: [0, 1.4, 1.5], fov: 35 } as any}
       >
         <ambientLight intensity={0.6} />
         <directionalLight

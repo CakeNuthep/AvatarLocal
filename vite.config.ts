@@ -21,6 +21,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/coqui/, ''),
       },
+      '/api/kokoro': {
+        target: 'http://localhost:5004',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/kokoro/, ''),
+      },
     },
   },
 })

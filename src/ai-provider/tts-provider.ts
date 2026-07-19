@@ -27,7 +27,7 @@ export abstract class TTSProvider {
       }
       this.audioContext = new AudioCtx();
     }
-    return this.audioContext;
+    return this.audioContext as AudioContext;
   }
 
   /**

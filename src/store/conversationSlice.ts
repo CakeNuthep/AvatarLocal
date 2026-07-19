@@ -4,6 +4,7 @@ import { EmotionStreamParser } from '../ai-provider/stream-parser';
 import { AudioQueueScheduler } from '../ai-provider/audio-queue-scheduler';
 import { PiperTTSProvider } from '../ai-provider/piper-tts-provider';
 import { CoquiTTSProvider } from '../ai-provider/coqui-tts-provider';
+import { KokoroTTSProvider } from '../ai-provider/kokoro-tts-provider';
 import { setPipelineStatus, setCurrentEmotion } from './avatarSlice';
 import { classifyTextEmotion } from '../ai-provider/emotion-classifier';
 import type { ChatMessage } from '../ai-provider/ai-provider';
@@ -38,7 +39,7 @@ export const getScheduler = (dispatch: any, audioContext: AudioContext) => {
         dispatch(setPipelineStatus('idle'));
         dispatch(conversationSlice.actions.setStatus('idle'));
       },
-      onSentenceStart: (text, emotion) => {
+      onSentenceStart: (_text, emotion) => {
         if (emotion) {
           dispatch(setCurrentEmotion(emotion));
         }
@@ -66,7 +67,12 @@ export const sendUserMessage = createAsyncThunk<
   // 1. Get scheduler and stop any active speech/synthesis
   const scheduler = getScheduler(dispatch, audioContext);
   const ttsEngine = state.ui.ttsEngine || 'piper';
-  const ttsProvider = ttsEngine === 'coqui' ? new CoquiTTSProvider() : new PiperTTSProvider();
+  const ttsProvider =
+    ttsEngine === 'coqui'
+      ? new CoquiTTSProvider()
+      : ttsEngine === 'kokoro'
+      ? new KokoroTTSProvider()
+      : new PiperTTSProvider();
   scheduler.setTTSProvider(ttsProvider);
   
   scheduler.stop();
@@ -206,8 +212,8 @@ export const selectConversationError = createSelector(
 export const selectTrimmedMessages = createSelector(
   [selectMessages],
   (messages) => {
-    const systemMsgs = messages.filter((m) => m.role === 'system');
-    const nonSystemMsgs = messages.filter((m) => m.role !== 'system');
+    const systemMsgs = messages.filter((m: ChatMessage) => m.role === 'system');
+    const nonSystemMsgs = messages.filter((m: ChatMessage) => m.role !== 'system');
     const lastN = nonSystemMsgs.slice(-10);
     return [...systemMsgs, ...lastN];
   }

@@ -78,7 +78,7 @@ export class LipSyncDriver {
    * @returns Current mouth-open weight
    */
   update(): number {
-    this.analyser.getFloatTimeDomainData(this.timeData);
+    this.analyser.getFloatTimeDomainData(this.timeData as any);
     const mouthOpen = this.calculateMouthOpenFromData(this.timeData);
     if (this.onUpdate) {
       this.onUpdate(mouthOpen);

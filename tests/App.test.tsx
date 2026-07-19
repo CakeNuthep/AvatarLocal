@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { expect, test, vi } from 'vitest'
 import { Provider } from 'react-redux'
 import { store } from '../src/store'
@@ -106,10 +106,12 @@ test('renders chat input and triggers synthesis on send button click', async () 
 
   // Type a message and click send
   fireEvent.change(textarea, { target: { value: 'Test message' } });
-  fireEvent.click(sendButton);
 
-  // Wait for the async task queue/synthesis promise to resolve
-  await new Promise((resolve) => setTimeout(resolve, 50))
+  await act(async () => {
+    fireEvent.click(sendButton);
+    // Wait for the async task queue/synthesis promise to resolve
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  });
 
   // Verify AudioContext was instantiated and resumed
   expect(mockAudioContextClass).toHaveBeenCalled()

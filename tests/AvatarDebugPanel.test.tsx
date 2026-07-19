@@ -101,4 +101,40 @@ describe('AvatarDebugPanel', () => {
     expect(screen.getByText('happy')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Reset/i })).toBeInTheDocument()
   })
+
+  test('triggers onSpeak when typing text and clicking Speak button', () => {
+    const mockVRM = {
+      expressionManager: {
+        expressions: [
+          { name: 'happy' },
+        ],
+        getValue: vi.fn().mockReturnValue(0),
+      },
+    } as unknown as VRM
+
+    const speakSpy = vi.fn().mockResolvedValue(undefined)
+    render(
+      <AvatarDebugPanel
+        vrm={mockVRM}
+        setExpression={vi.fn()}
+        reset={vi.fn()}
+        onSpeak={speakSpy}
+      />
+    )
+
+    const input = screen.getByPlaceholderText(/Type text to speak.../i) as HTMLInputElement
+    const button = screen.getByRole('button', { name: /Speak/i })
+
+    // Initially button is disabled
+    expect(button).toBeDisabled()
+
+    // Type text
+    fireEvent.change(input, { target: { value: 'Test direct voice synthesis' } })
+    expect(input.value).toBe('Test direct voice synthesis')
+    expect(button).not.toBeDisabled()
+
+    // Click button
+    fireEvent.click(button)
+    expect(speakSpy).toHaveBeenCalledWith('Test direct voice synthesis')
+  })
 })

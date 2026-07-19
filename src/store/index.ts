@@ -6,7 +6,7 @@ interface UIState {
   uiLanguage: string
   theme: 'dark' | 'light'
   showThinking: boolean
-  ttsEngine: 'piper' | 'coqui' | 'kokoro'
+  ttsEngine: 'piper' | 'coqui' | 'kokoro' | 'f5'
 }
 
 const initialState: UIState = {
@@ -29,7 +29,7 @@ const uiSlice = createSlice({
     toggleShowThinking(state) {
       state.showThinking = !state.showThinking
     },
-    setTTSEngine(state, action: PayloadAction<'piper' | 'coqui' | 'kokoro'>) {
+    setTTSEngine(state, action: PayloadAction<'piper' | 'coqui' | 'kokoro' | 'f5'>) {
       state.ttsEngine = action.payload
     },
   },

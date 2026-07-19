@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { Suspense, useState, useEffect, useRef, useCallback } from 'react'
-import { useSelector, useStore } from 'react-redux'
+import { useSelector, useStore, useDispatch } from 'react-redux'
 import { VRM } from '@pixiv/three-vrm'
 import { ACESFilmicToneMapping } from 'three'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
@@ -10,7 +10,7 @@ import { useBlendshapeController } from './useBlendshapeController'
 import { useIdleAnimation } from './useIdleAnimation'
 import { useLookAtController } from './useLookAtController'
 import AvatarDebugPanel from './AvatarDebugPanel'
-import { type RootState, selectCurrentEmotion } from '../store'
+import { type RootState, selectCurrentEmotion, type AppDispatch, speakDirectText } from '../store'
 import { applyEmotion } from './emotionPresets'
 import { activeLipSyncDriverRef } from '../ai-provider/lip-sync-driver'
 import { activeRhubarbCuesRef } from '../ai-provider/audio-queue-scheduler'
@@ -141,6 +141,20 @@ function AvatarModel({ currentEmotion, onLoaded, onControllerReady }: AvatarMode
 export default function AvatarCanvas() {
   const [vrm, setVrm] = useState<VRM | null>(null)
   const currentEmotion = useSelector(selectCurrentEmotion)
+  const dispatch = useDispatch<AppDispatch>()
+  const audioContextRef = useRef<AudioContext | null>(null)
+
+  const handleSpeak = useCallback(async (text: string) => {
+    const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioCtx()
+    }
+    const ctx = audioContextRef.current as AudioContext
+    if (ctx.state === 'suspended') {
+      await ctx.resume()
+    }
+    await dispatch(speakDirectText({ text, audioContext: ctx }))
+  }, [dispatch])
   
   // Keep stable references to controller methods to avoid unnecessary renders
   const controllerRef = useRef<{
@@ -199,6 +213,7 @@ export default function AvatarCanvas() {
           vrm={vrm}
           setExpression={handleSetExpression}
           reset={handleReset}
+          onSpeak={handleSpeak}
         />
       )}
     </div>

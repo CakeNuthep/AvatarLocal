@@ -5,15 +5,27 @@ interface AvatarDebugPanelProps {
   vrm: VRM | null
   setExpression: (name: string, weight: number) => void
   reset: () => void
+  onSpeak?: (text: string) => Promise<void>
 }
 
 /**
  * A beautiful, glassmorphic UI overlay containing sliders for each blendshape expression
  * on the loaded VRM. Used to manually test expression ranges.
  */
-export default function AvatarDebugPanel({ vrm, setExpression, reset }: AvatarDebugPanelProps) {
+export default function AvatarDebugPanel({ vrm, setExpression, reset, onSpeak }: AvatarDebugPanelProps) {
   const [expressionWeights, setExpressionWeights] = useState<Record<string, number>>({})
   const [collapsed, setCollapsed] = useState(false)
+  const [ttsText, setTtsText] = useState('')
+
+  const handleSpeakClick = async () => {
+    if (ttsText.trim() && onSpeak) {
+      try {
+        await onSpeak(ttsText)
+      } catch (err) {
+        console.error('Failed to speak direct text:', err)
+      }
+    }
+  }
 
   // Fetch available expression names on load or when VRM changes
   const expressions = vrm?.expressionManager?.expressions || []
@@ -91,37 +103,81 @@ export default function AvatarDebugPanel({ vrm, setExpression, reset }: AvatarDe
       </div>
 
       {!collapsed && (
-        <div style={scrollAreaStyle}>
-          {Object.entries(categorized).map(([category, names]) => {
-            if (names.length === 0) return null
-            return (
-              <div key={category} style={{ marginBottom: '16px' }}>
-                <div style={categoryTitleStyle}>{category}</div>
-                {names.map((name) => {
-                  const value = expressionWeights[name] ?? 0
-                  return (
-                    <div key={name} style={controlRowStyle}>
-                      <div style={labelContainerStyle}>
-                        <span style={labelStyle}>{name}</span>
-                        <span id={`val-indicator-${name}`} style={valueStyle}>{value.toFixed(2)}</span>
+        <>
+          <div style={scrollAreaStyle}>
+            {Object.entries(categorized).map(([category, names]) => {
+              if (names.length === 0) return null
+              return (
+                <div key={category} style={{ marginBottom: '16px' }}>
+                  <div style={categoryTitleStyle}>{category}</div>
+                  {names.map((name) => {
+                    const value = expressionWeights[name] ?? 0
+                    return (
+                      <div key={name} style={controlRowStyle}>
+                        <div style={labelContainerStyle}>
+                          <span style={labelStyle}>{name}</span>
+                          <span id={`val-indicator-${name}`} style={valueStyle}>{value.toFixed(2)}</span>
+                        </div>
+                        <input
+                          id={`slider-input-${name}`}
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.01"
+                          value={value}
+                          onChange={(e) => handleSliderChange(name, parseFloat(e.target.value))}
+                          style={sliderStyle}
+                        />
                       </div>
-                      <input
-                        id={`slider-input-${name}`}
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        value={value}
-                        onChange={(e) => handleSliderChange(name, parseFloat(e.target.value))}
-                        style={sliderStyle}
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-            )
-          })}
-        </div>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+          <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '12px' }} className="tts-test-container">
+            <div style={categoryTitleStyle}>TTS Testing</div>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+              <input
+                type="text"
+                placeholder="Type text to speak..."
+                value={ttsText}
+                onChange={(e) => setTtsText(e.target.value)}
+                style={{
+                  flexGrow: 1,
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '6px',
+                  padding: '6px 10px',
+                  color: '#fff',
+                  fontSize: '13px',
+                  outline: 'none',
+                }}
+                className="tts-test-input"
+              />
+              <button
+                type="button"
+                onClick={handleSpeakClick}
+                disabled={!ttsText.trim()}
+                style={{
+                  background: '#8b5cf6',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  opacity: ttsText.trim() ? 1 : 0.5,
+                  transition: 'opacity 0.2s',
+                }}
+                className="tts-test-btn"
+              >
+                Speak
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

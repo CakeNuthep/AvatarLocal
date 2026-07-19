@@ -26,6 +26,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/kokoro/, ''),
       },
+      '/api/f5': {
+        target: 'http://127.0.0.1:5005',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/f5/, ''),
+      },
     },
   },
 })

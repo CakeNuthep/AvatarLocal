@@ -5,6 +5,7 @@ import { AudioQueueScheduler } from '../ai-provider/audio-queue-scheduler';
 import { PiperTTSProvider } from '../ai-provider/piper-tts-provider';
 import { CoquiTTSProvider } from '../ai-provider/coqui-tts-provider';
 import { KokoroTTSProvider } from '../ai-provider/kokoro-tts-provider';
+import { F5TTSProvider } from '../ai-provider/f5-tts-provider';
 import { setPipelineStatus, setCurrentEmotion } from './avatarSlice';
 import { classifyTextEmotion } from '../ai-provider/emotion-classifier';
 import type { ChatMessage } from '../ai-provider/ai-provider';
@@ -72,6 +73,8 @@ export const sendUserMessage = createAsyncThunk<
       ? new CoquiTTSProvider()
       : ttsEngine === 'kokoro'
       ? new KokoroTTSProvider()
+      : ttsEngine === 'f5'
+      ? new F5TTSProvider()
       : new PiperTTSProvider();
   scheduler.setTTSProvider(ttsProvider);
   
@@ -151,6 +154,47 @@ export const sendUserMessage = createAsyncThunk<
     }
     dispatch(conversationSlice.actions.setStatus('error'));
     dispatch(conversationSlice.actions.setError(error.message || 'An error occurred'));
+    dispatch(setPipelineStatus('idle'));
+    throw error;
+  }
+});
+
+/**
+ * Thunk to orchestrate: User Input -> AudioQueueScheduler (bypassing LLM/Ollama)
+ */
+export const speakDirectText = createAsyncThunk<
+  void,
+  { text: string; audioContext: AudioContext },
+  { state: any }
+>('conversation/speakDirectText', async ({ text, audioContext }, thunkAPI) => {
+  const dispatch = thunkAPI.dispatch;
+  const state = thunkAPI.getState();
+  const language = state.ui.uiLanguage;
+
+  const turnStartTime = performance.now();
+  const scheduler = getScheduler(dispatch, audioContext);
+  const ttsEngine = state.ui.ttsEngine || 'piper';
+  const ttsProvider =
+    ttsEngine === 'coqui'
+      ? new CoquiTTSProvider()
+      : ttsEngine === 'kokoro'
+      ? new KokoroTTSProvider()
+      : ttsEngine === 'f5'
+      ? new F5TTSProvider()
+      : new PiperTTSProvider();
+
+  scheduler.setTTSProvider(ttsProvider);
+  scheduler.stop();
+  scheduler.setTurnStartTime(turnStartTime);
+
+  dispatch(conversationSlice.actions.setStatus('loading'));
+  dispatch(setPipelineStatus('thinking'));
+
+  try {
+    scheduler.enqueueText(text, language);
+  } catch (error: any) {
+    dispatch(conversationSlice.actions.setStatus('error'));
+    dispatch(conversationSlice.actions.setError(error.message || 'TTS synthesis failed'));
     dispatch(setPipelineStatus('idle'));
     throw error;
   }

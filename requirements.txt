@@ -1,5 +1,5 @@
 flatbuffers==25.12.19
-numpy==2.4.6
+numpy==1.26.4
 onnxruntime==1.27.0
 packaging==26.2
 pathvalidate==3.3.1

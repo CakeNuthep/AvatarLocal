@@ -24,6 +24,7 @@ export default function TTSEngineSelector() {
         <option value="piper">Piper (Local)</option>
         <option value="coqui">Coqui (Local)</option>
         <option value="kokoro">Kokoro (Local)</option>
+        <option value="f5">F5-TTS (Local)</option>
       </select>
     </div>
   )

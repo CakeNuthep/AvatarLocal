@@ -19,7 +19,7 @@ The application streams chat requests from a local Ollama service running on por
 3. Verify Ollama is running and responsive on `http://localhost:11434`.
 
 ### B. Text-to-Speech (TTS) Server
-The application supports two local text-to-speech engines: **Piper (Local)** on port `5002` (proxied via Vite at `/api/tts`), and **Coqui (Local)** on port `5003` (proxied via Vite at `/api/coqui`). You can dynamically switch between them using the glassmorphic select dropdown menu in the app header.
+The application supports four local text-to-speech engines: **Piper (Local)** on port `5002` (proxied via Vite at `/api/tts`), **Coqui (Local)** on port `5003` (proxied via Vite at `/api/coqui`), **Kokoro (Local)** on port `5004` (proxied via Vite at `/api/kokoro`), and **F5-TTS (Local)** on port `5005` (proxied via Vite at `/api/f5`). You can dynamically switch between them using the glassmorphic select dropdown menu in the app header.
 
 #### Option 1: Piper TTS Server (Port 5002)
 1. Run the zero-dependency Python HTTP server script inside the virtual environment:
@@ -48,6 +48,22 @@ For fast, lightweight, CPU-friendly speech synthesis:
    ```
 2. **Auto-Download Support**: Missing model files (`kokoro-v1.0.onnx` and `voices-v1.0.bin`) are automatically downloaded from GitHub releases and saved to the `resource/kokoro` directory on the first run.
 3. Switch the active engine to **Kokoro (Local)** in the header dropdown menu.
+
+#### Option 4: F5-TTS Zero-Shot Voice Cloning Server (Port 5005)
+For high-fidelity zero-shot voice cloning:
+1. Install the F5-TTS package inside your virtual environment (requires GPU CUDA support for optimal latency):
+   ```powershell
+   .\.venv-tts\Scripts\pip.exe install f5-tts
+   ```
+2. Start the local F5-TTS server on port `5005`:
+   ```powershell
+   .\.venv-tts\Scripts\python.exe f5_tts_server.py
+   ```
+3. **Voice Cloning Configuration**: 
+   * Place your 5–10s reference `.wav` voice file in `resource/f5/ref.wav` and its transcript in `resource/f5/ref.txt`.
+   * If `ref.wav` is missing, the server will check for and fall back to `output_test.wav` in your project root.
+4. **Phonetic Thai Fallback**: If F5-TTS is selected for Thai requests, it uses a rule-based Romanization parser to translate Thai unicode text to Latin phonetics so the multilingual voice model can pronounce it.
+5. Switch the active engine to **F5-TTS (Local)** in the header dropdown menu.
 
 ---
 

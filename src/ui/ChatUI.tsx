@@ -10,8 +10,12 @@ import {
   selectConversationStatus,
   selectConversationError,
   toggleShowThinking,
+  setPipelineStatus,
+  setMouthOpen,
 } from '../store'
 import type { ChatMessage } from '../ai-provider/ai-provider'
+import { F5TTSProvider } from '../ai-provider/f5-tts-provider'
+import { LipSyncDriver } from '../ai-provider/lip-sync-driver'
 
 export default function ChatUI() {
   const { t } = useTranslation()
@@ -26,6 +30,42 @@ export default function ChatUI() {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
+
+  const handleTestF5Thai = async () => {
+    try {
+      dispatch(setPipelineStatus('thinking'))
+      const response = await fetch('/api/f5/test')
+      if (!response.ok) {
+        throw new Error(`F5 Test request failed with status: ${response.status}`)
+      }
+      const payload = await response.json()
+      const audioBase64 = payload.audio
+
+      // Decode Base64 to WAV Blob
+      const binaryString = atob(audioBase64)
+      const len = binaryString.length
+      const bytes = new Uint8Array(len)
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes.buffer], { type: 'audio/wav' })
+
+      // Trigger automatic WAV file download
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'test_f5_output.wav'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      dispatch(setPipelineStatus('idle'))
+    } catch (err: any) {
+      console.error('Test F5 Thai download failed:', err)
+      dispatch(setPipelineStatus('idle'))
+    }
+  }
 
   // Auto-scroll messages to the bottom
   useEffect(() => {
@@ -173,6 +213,14 @@ export default function ChatUI() {
         )}
 
         <div className="chat-header-actions">
+          <button
+            onClick={handleTestF5Thai}
+            className="test-f5-btn"
+            title="Test F5 Thai Speech"
+            style={{ padding: '4px 8px', fontSize: '0.8rem', cursor: 'pointer', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#fff' }}
+          >
+            🧪 Test F5
+          </button>
           <button
             onClick={() => dispatch(toggleShowThinking())}
             className={`thinking-toggle-btn ${showThinking ? 'active' : ''}`}

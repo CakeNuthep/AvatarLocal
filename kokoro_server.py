@@ -1,5 +1,13 @@
 import os
 import sys
+
+# Force UTF-8 encoding on Windows for sys.stdout, sys.stderr, and default file open
+os.environ["PYTHONUTF8"] = "1"
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 import urllib.request
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.parse

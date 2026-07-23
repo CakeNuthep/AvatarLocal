@@ -1,11 +1,20 @@
 import os
 import sys
+
+# Force UTF-8 encoding on Windows for sys.stdout, sys.stderr, and default file open
+os.environ["PYTHONUTF8"] = "1"
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 import urllib.request
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.parse
 import base64
 import json
 import uuid
+import numpy as np
 
 # Configure torchaudio to use soundfile backend to avoid torchcodec requirement on Windows
 try:
@@ -38,6 +47,27 @@ DEFAULT_REF_TEXT = os.path.join(MODEL_DIR, "ref.txt")
 # Global F5-TTS instance and engine flag
 f5_instance = None
 use_th_package = False
+
+def preprocess_ref_audio(audio_path: str) -> str:
+    """
+    Ensures reference audio is mono 24kHz PCM_16 for optimal F5-TTS feature extraction.
+    """
+    try:
+        import soundfile as sf
+        import scipy.signal
+        data, sr = sf.read(audio_path)
+        if data.ndim > 1:
+            data = data.mean(axis=1) # Convert stereo to mono
+        if sr != 24000:
+            data = scipy.signal.resample(data, int(len(data) * 24000 / sr))
+        
+        clean_path = os.path.join(MODEL_DIR, "ref_24k_mono.wav")
+        sf.write(clean_path, data, 24000, subtype='PCM_16')
+        print(f"[DEBUG F5 Server] Auto-preprocessed reference audio to 24kHz MONO: {clean_path}")
+        return clean_path
+    except Exception as e:
+        print(f"[WARN F5 Server] Preprocessing ref audio failed: {e}. Using original file.")
+        return audio_path
 
 def has_thai(text: str) -> bool:
     """
@@ -152,16 +182,21 @@ class F5TTSHTTPRequestHandler(BaseHTTPRequestHandler):
         global f5_instance, use_th_package
 
         parsed_url = urllib.parse.urlparse(self.path)
-        params = urllib.parse.parse_qs(parsed_url.query)
+        params = urllib.parse.parse_qs(parsed_url.query, encoding='utf-8')
 
-        if parsed_url.path != "/":
+        if parsed_url.path not in ["/", "/test"]:
             self.send_response(404)
             self.end_headers()
             return
 
-        text = params.get("text", [""])[0]
-        ref_audio = params.get("ref_audio", [DEFAULT_REF_AUDIO])[0]
-        ref_text = params.get("ref_text", [""])[0]
+        if parsed_url.path == "/test":
+            text = "สวัสดีครับ ยินดีต้อนรับครับ"
+            ref_audio = DEFAULT_REF_AUDIO
+            ref_text = "ฉันเดินทางไปเที่ยวที่จังหวัดเชียงใหม่ในช่วงฤดูหนาวเพื่อสัมผัสอากาศเย็นสบาย"
+        else:
+            text = params.get("text", [""])[0]
+            ref_audio = params.get("ref_audio", [DEFAULT_REF_AUDIO])[0]
+            ref_text = params.get("ref_text", [""])[0]
 
         if not text:
             self.send_response(400)
@@ -219,10 +254,11 @@ class F5TTSHTTPRequestHandler(BaseHTTPRequestHandler):
 
         temp_wav_path = os.path.join(MODEL_DIR, f"temp_{uuid.uuid4().hex}.wav")
         try:
-            print(f"[DEBUG F5 Server] Synthesizing text: '{text}' using ref: '{ref_audio}' with transcript: '{ref_text}'")
+            clean_ref_audio = preprocess_ref_audio(ref_audio)
+            print(f"[DEBUG F5 Server] Synthesizing text: '{text}' using ref: '{clean_ref_audio}' with transcript: '{ref_text}'")
             if use_th_package:
                 res = f5_instance.infer(
-                    ref_audio=ref_audio,
+                    ref_audio=clean_ref_audio,
                     ref_text=ref_text,
                     gen_text=text
                 )
@@ -240,6 +276,11 @@ class F5TTSHTTPRequestHandler(BaseHTTPRequestHandler):
                     ref_text=ref_text,
                     gen_text=text
                 )
+
+            # Clean NaN / Inf floating point overflows to prevent ringing noise
+            if np.isnan(audio).any():
+                print("[WARN F5 Server] Detected NaN values in audio array. Cleaning with nan_to_num.")
+                audio = np.nan_to_num(audio)
 
             # Save float32 samples to temporary PCM 16-bit WAV file
             sf.write(temp_wav_path, audio, sample_rate, subtype='PCM_16')
@@ -283,9 +324,17 @@ def run():
         try:
             from f5_tts_th.tts import TTS as F5TTS_TH
             print(f"Loading native Thai F5-TTS-TH model on {device.upper()}...", flush=True)
-            f5_instance = F5TTS_TH(model="v1")
+            try:
+                f5_instance = F5TTS_TH(model="v2")
+                print("F5-TTS-TH V2 (IPA/G2P) Thai model loaded successfully.", flush=True)
+            except Exception as e_v2:
+                print(f"[INFO] V2 model failed ({e_v2}), falling back to V1...", flush=True)
+                f5_instance = F5TTS_TH(model="v1")
+                print("F5-TTS-TH V1 model loaded successfully.", flush=True)
             use_th_package = True
-            print("F5-TTS-TH Thai model loaded successfully.", flush=True)
+            if hasattr(f5_instance, 'f5_model'):
+                f5_instance.f5_model = f5_instance.f5_model.to(torch.float32)
+                print("Casted F5-TTS model to FP32 precision to prevent NaN overflows.", flush=True)
         except Exception as e_th:
             print(f"[INFO] Native f5-tts-th not loaded ({e_th}). Falling back to base F5-TTS...", flush=True)
             from f5_tts.api import F5TTS
